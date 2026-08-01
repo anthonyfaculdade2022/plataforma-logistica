@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root { --ink:#181b1a; --muted:#737a76; --line:#e9ecea; --surface:#ffffff; --canvas:#f7f8f7; --primary:#1d2521; --radius:14px; }
+* { box-sizing:border-box; }
+html { background:var(--canvas); }
+body { margin:0; background:var(--canvas); color:var(--ink); font-family:var(--font-geist-sans),Inter,ui-sans-serif,system-ui,sans-serif; letter-spacing:-.008em; }
+button,input,select,textarea { font:inherit; }
+button { cursor:pointer; transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease,opacity .2s ease; }
+button:active { transform:translateY(1px); }
+input,select,textarea { transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease; }
+::-webkit-scrollbar { width:7px; height:7px; }
+::-webkit-scrollbar-thumb { background:#d7dcda; border-radius:999px; }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(18,24,21,.025),0 6px 20px rgba(18,24,21,.018); }
+.panel:hover { border-color:#dfe3e1; }
+.label { display:block; margin-bottom:8px; color:#59615d; font-size:11px; font-weight:600; letter-spacing:.02em; }
+.field { width:100%; min-height:42px; border:1px solid #e0e4e2; border-radius:10px; background:#fff; padding:10px 12px; color:#252a27; outline:none; }
+.field:hover { border-color:#cfd5d1; }
+.field:focus { border-color:#8e9993; box-shadow:0 0 0 3px rgba(37,48,42,.07); }
+.metric-card { min-height:104px; }
+.kanban-column { background:#f8f9f8!important; border-color:#ecefed!important; border-radius:var(--radius)!important; padding:14px!important; }
+.freight-card { border-color:#ecefed!important; border-radius:12px!important; padding:18px!important; box-shadow:0 1px 2px rgba(18,24,21,.025)!important; }
+.freight-card:hover { transform:translateY(-2px)!important; border-color:#dce1de!important; box-shadow:0 8px 24px rgba(18,24,21,.055)!important; }
+.side-panel .panel { padding:24px; }
+[class*="max-w-[1700px]"] { padding:40px!important; }
+aside.space-y-6 { display:flex; flex-direction:column; gap:24px!important; }
+.mt-6.grid.grid-cols-2 { gap:16px!important; margin-top:28px!important; }
+.mt-6.grid.grid-cols-2 > .panel { padding:22px!important; min-height:106px; }
+[class*="xl:grid-cols-[minmax(0,1fr)_310px]"] { gap:28px!important; margin-top:28px!important; grid-template-columns:minmax(0,1fr) 328px; }
+[class*="bg-[#eef1ef]"] { background:#f8f9f8!important; border-color:#ecefed!important; border-radius:var(--radius)!important; padding:14px!important; }
+aside .panel { border-color:#ecefed; box-shadow:none; }
+aside .panel:hover { border-color:#dfe3e1; }
+aside .panel > div:first-child { margin-bottom:2px; }
+table th { font-weight:600!important; letter-spacing:.035em; }
+table td { color:#424945; }
+.flex.gap-1.overflow-x-auto.p-4 { gap:8px!important; padding:20px!important; }
+.flex.gap-1.overflow-x-auto.p-4 button { display:inline-flex; align-items:center; gap:7px; border:1px solid #e8ebe9; background:#fff; padding:7px 11px; color:#68716c; }
+.flex.gap-1.overflow-x-auto.p-4 button:not(:first-child)::before { content:""; width:6px; height:6px; border-radius:50%; background:#9aa29d; }
+.flex.gap-1.overflow-x-auto.p-4 button:nth-child(2)::before { background:#f59e0b; }
+.flex.gap-1.overflow-x-auto.p-4 button:nth-child(3)::before { background:#3b82f6; }
+.flex.gap-1.overflow-x-auto.p-4 button:nth-child(4)::before { background:#22c55e; }
+.flex.gap-1.overflow-x-auto.p-4 button:hover { border-color:#d9dedb; background:#fafbfa; }
+[class*="bg-[#174e37]"] { background:#202723!important; }
+[class*="bg-[#174e37]"]:hover { background:#111512!important; }
+[class*="bg-[#17231d]"] { background:#171a18!important; }
+[class*="bg-[#d6f269]"] { background:#f4f5f4!important; color:#252a27!important; }
+[class*="rounded-2xl"] { border-radius:var(--radius)!important; }
+[class*="rounded-xl"] { border-radius:12px!important; }
+@media(max-width:1024px){[class*="max-w-[1700px]"]{padding:28px!important}}
+@media(max-width:640px){[class*="max-w-[1700px]"]{padding:20px!important}.mt-6.grid.grid-cols-2{gap:12px!important}.mt-6.grid.grid-cols-2>.panel{padding:18px!important}}
+@keyframes fadein { from { opacity:0; transform:translateY(5px) } to { opacity:1; transform:none } }
+.fadein { animation:fadein .2s ease-out; }
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

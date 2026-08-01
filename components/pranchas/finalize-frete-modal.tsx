@@ -1,0 +1,11 @@
+"use client";
+import {useEffect,useState} from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import {CheckCircle2,MapPin,X} from "lucide-react";
+import {Frete} from "@/features/pranchas/types";
+
+export function FinalizeFreteModal({frete,close,confirm}:{frete:Frete|null;close:()=>void;confirm:(f:Frete,l:"Aralco"|"Generalco")=>void}){
+ const [local,setLocal]=useState<"Aralco"|"Generalco"|"">("");
+ useEffect(()=>{if(frete)setLocal("")},[frete]);
+ return <Dialog.Root open={!!frete} onOpenChange={v=>!v&&close()}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-[#101914]/40"/><Dialog.Content className="fadein fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl outline-none"><div className="flex justify-between border-b p-5"><div><Dialog.Title className="font-semibold">Finalizar Frete</Dialog.Title><Dialog.Description className="mt-1 text-xs text-[#78847d]">Confirme onde a prancha ficará disponível</Dialog.Description></div><Dialog.Close><X size={18}/></Dialog.Close></div>{frete&&<div className="p-5"><div className="mb-5 rounded-xl border border-[#e8ebe9] bg-[#fafbfa] p-4"><p className="text-xs text-[#7b847f]">Frete {frete.id}</p><p className="mt-1.5 text-sm font-medium">Frota {frete.frota} · {frete.origem} → {frete.destino}</p></div><label><span className="label">Onde a prancha ficará disponível?</span><div className="relative"><MapPin size={15} className="pointer-events-none absolute left-3 top-3.5 text-[#7c8580]"/><select required value={local} onChange={e=>setLocal(e.target.value as "Aralco"|"Generalco")} className="field pl-9"><option value="">Selecione uma unidade</option><option value="Aralco">Aralco</option><option value="Generalco">Generalco</option></select></div></label><div className="mt-6 flex gap-3"><button type="button" onClick={close} className="flex-1 rounded-xl border border-[#e0e4e2] py-3 text-sm font-medium">Cancelar</button><button disabled={!local} onClick={()=>local&&confirm(frete,local)} className="flex-1 rounded-xl bg-[#174e37] py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={16} className="mr-1.5 inline"/>Finalizar Frete</button></div></div>}</Dialog.Content></Dialog.Portal></Dialog.Root>
+}
