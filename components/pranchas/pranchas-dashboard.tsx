@@ -649,18 +649,13 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             </div>
           )}
           <Header
-            search={search}
-            setSearch={setSearch}
-            filter={filter}
-            setFilter={setFilter}
             onNew={() => setNewOpen(true)}
             onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }}
-            onFleet={() => { setFleetViewFilter(null); setFleetOpen(true); }}
-            onWhatsapp={() => setWhatsappOpen(true)}
           />
           <Indicators frotas={frotas} onSelect={(value) => { setFleetViewFilter(value); setFleetOpen(true); }} />
-          <div className="mt-4 grid gap-4">
+          <div className="mt-4 grid gap-6">
             <div className="min-w-0 space-y-4">
+              <OperationToolbar search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} />
               <Kanban
                 fretes={filtered}
                 frotas={frotas}
@@ -670,6 +665,18 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 onCancel={setCancelFrete}
                 onFinishMaintenance={finishMaintenance}
               />
+              <section className="grid items-start gap-4 lg:grid-cols-2">
+                <FleetStatus
+                  frotas={frotas}
+                  fretes={fretes}
+                  manutencoes={manutencoes}
+                  onPreOs={setPreOsFrota}
+                  onNoDriver={(numero) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, status: "Disponível", semMotorista: true } : item))}
+                  onMaintenance={(frota) => { setMaintenanceFrota(frota.numero); setMaintenanceOpen(true); }}
+                  onLocation={(numero, localDisponivel) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, localDisponivel } : item))}
+                />
+                <Whatsapp flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} />
+              </section>
               <section className="panel overflow-hidden">
                 <div className="flex flex-col justify-between gap-2 px-4 py-3 sm:flex-row sm:items-center">
                   <div>
@@ -677,7 +684,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                     <p className="mt-0.5 text-[11px] text-[#7a867f]">Consulte o histórico completo quando necessário.</p>
                   </div>
                   <button className="workspace-action" onClick={() => setHistoryExpanded((value) => !value)}>
-                    {historyExpanded ? "Recolher histórico" : "Ver histórico completo"}
+                    {historyExpanded ? "Recolher Histórico" : "Expandir Histórico"}
                   </button>
                 </div>
               {historyExpanded && <HistoryTabs
@@ -866,77 +873,25 @@ function MobileHeader({ open }: { open: () => void }) {
   );
 }
 function Header({
-  search,
-  setSearch,
-  filter,
-  setFilter,
   onNew,
   onMaintenance,
-  onFleet,
-  onWhatsapp,
 }: {
-  search: string;
-  setSearch: (v: string) => void;
-  filter: string;
-  setFilter: (v: Status | "Todos") => void;
   onNew: () => void;
   onMaintenance: () => void;
-  onFleet: () => void;
-  onWhatsapp: () => void;
 }) {
-  const [lastUpdated, setLastUpdated] = useState(
-    new Date().toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  );
-  useEffect(() => {
-    const interval = window.setInterval(
-      () =>
-        setLastUpdated(
-          new Date().toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        ),
-      60000,
-    );
-    return () => window.clearInterval(interval);
-  }, []);
-  const todayLabel = new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date());
   return (
-    <>
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="header-copy">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[.15em] text-[#688071]">
-            Operação de transporte
-          </div>
           <h1 className="text-2xl font-semibold tracking-[-.03em] sm:text-3xl">
             Gestão de Pranchas
           </h1>
-          <p className="mt-1 text-sm text-[#6a776f]">
-            Solicitação, deslocamento e manutenção em uma única visão.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-[#748078]">
+            <span className="font-medium text-[#47514b]">{operationLabel(operationKey())}</span>
+            <span>07:00 → 06:59</span>
+            <span className="inline-flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Online</span>
+          </div>
         </div>
         <div className="header-actions flex flex-wrap gap-2">
-          <button
-            onClick={onFleet}
-            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
-          >
-            <CircleGauge size={16} />
-            Status das Pranchas
-          </button>
-          <button
-            onClick={onWhatsapp}
-            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
-          >
-            <MessageCircle size={16} />
-            Programação
-          </button>
           <button
             onClick={onMaintenance}
             className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
@@ -952,19 +907,19 @@ function Header({
             Novo Frete
           </button>
         </div>
-      </div>
-      <div className="operational-strip mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-[#e5e9e6] bg-white px-3 py-1.5 text-[10px] text-[#68736c] shadow-[0_1px_2px_rgba(18,24,21,.02)]">
-        <span className="font-semibold text-[#343a36]">
-          {operationLabel(operationKey())}
-        </span>
-        <span>07:00 → 06:59</span>
-        <span className="inline-flex items-center gap-1.5">
-          <i className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,.1)]" />
-          Sistema Online
-        </span>
-        <span className="sm:ml-auto">Última atualização: {lastUpdated}</span>
-      </div>
-      <div className="panel mt-2.5 flex flex-col gap-2 p-2 md:flex-row md:items-center">
+      </header>
+  );
+}
+
+function OperationToolbar({ search, setSearch, filter, setFilter }: {
+  search: string;
+  setSearch: (value: string) => void;
+  filter: string;
+  setFilter: (value: Status | "Todos") => void;
+}) {
+  const todayLabel = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date());
+  return (
+      <div className="panel flex flex-col gap-2 p-2 md:flex-row md:items-center">
         <div className="flex items-center gap-2 border-b px-2 py-1.5 text-sm font-medium md:border-b-0 md:border-r md:py-0 md:pr-4">
           <CalendarDays size={17} />
           <span>{todayLabel}</span>
@@ -1000,7 +955,6 @@ function Header({
           />
         </div>
       </div>
-    </>
   );
 }
 
@@ -1114,7 +1068,7 @@ function Kanban({
           {operationLabel(currentOperation)}
         </span>
       </div>
-      <div className="kanban-board grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-4">
+      <div className="kanban-board grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
         <FreteColumn
           status="Pendente"
           fretes={active.filter((f) => f.status === "Pendente")}
@@ -1159,8 +1113,8 @@ function ColumnShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0 self-start">
-      <div className="mb-2 flex min-h-8 items-center gap-2 border-b border-[#e7ebe8] px-1 pb-2">
+    <div className="kanban-column min-w-0 self-start rounded-xl bg-[#f3f5f4] p-2.5">
+      <div className="mb-2 flex min-h-8 items-center gap-2 px-1 pb-1">
         <span className={`h-2 w-2 rounded-full ${dot}`} />
         <h3 className="text-sm font-semibold tracking-[-.01em] text-[#2d332f]">
           {title}
@@ -1169,7 +1123,7 @@ function ColumnShell({
           ({count})
         </span>
       </div>
-      <div className="space-y-2.5">{children}</div>
+      <div className="kanban-column-scroll max-h-[520px] space-y-2.5 overflow-y-auto pr-1">{children}</div>
     </div>
   );
 }
@@ -1204,12 +1158,6 @@ function FreteColumn({
     <ColumnShell title={status} count={fretes.length} dot={dot}>
       {fretes.map((f) => {
         const team = getEquipeTransporte(f);
-        const fleet = (
-          team[0]
-            ? frotas.find((x) => x.numero === team[0].frota) ||
-              getFrotaConfig(team[0].frota)
-            : undefined
-        ) as Frota | undefined;
         return (
           <button
             key={f.id}
@@ -1224,47 +1172,14 @@ function FreteColumn({
                   {f.destino}
                 </span>
               </div>
-              <span
-                className={`inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-medium leading-4 ${priorityStyle[f.prioridade]}`}
-              >
-                {f.prioridade === "Alta"
-                  ? "● Alta"
-                  : f.prioridade === "Média"
-                    ? "● Média"
-                    : "● Baixa"}
-              </span>
+              <span title={f.status} className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dot}`} />
             </div>
-            {f.fluxoOperacao === "sequencia" && f.etapas?.length && (
-              <p className="mt-1.5 pl-5 text-[10px] font-medium text-blue-600">
-                Etapa {(f.etapaAtual || 0) + 1} de {f.etapas.length}
-              </p>
-            )}
             <div className="mt-2 space-y-1.5 text-xs text-[#68716c]">
-              {f.equipamentoTipo && (
+              {equipmentText(f) && (
                 <span className="freight-equipment flex min-h-4 items-center gap-1.5 text-[12px] font-semibold text-[#3b433e]">
                   <Tractor size={14} className="shrink-0 text-[#67716b]" />
-                  {f.equipamentoTipo} {f.equipamentoCodigo}
+                  <span className="truncate">{equipmentText(f)}</span>
                 </span>
-              )}
-              <span className="flex min-h-4 items-center gap-1.5">
-                <Clock3 size={13} className="shrink-0" />
-                {f.horario}
-              </span>
-              {f.status === "Pendente" && (
-                <div className="space-y-1.5 pt-0.5 text-[11px] text-[#737c77]">
-                  {f.setor && (
-                    <span className="flex min-h-4 items-center gap-1.5">
-                      <Building2 size={13} className="shrink-0" />
-                      <span className="truncate">{f.setor}</span>
-                    </span>
-                  )}
-                  {f.solicitante && (
-                    <span className="flex min-h-4 items-center gap-1.5">
-                      <UserRound size={13} className="shrink-0" />
-                      <span className="truncate">{f.solicitante}</span>
-                    </span>
-                  )}
-                </div>
               )}
               {f.status !== "Pendente" && (
                 <div className="space-y-2 pt-0.5">
@@ -1303,10 +1218,10 @@ function FreteColumn({
                   )}
                 </div>
               )}
-              {fleet?.possuiPreOs && (
-                <span className="flex min-h-5 items-center gap-1.5 text-[10px] font-medium text-amber-700">
-                  ⚠ Pré-OS: {fleet.numeroPreOs}
-                </span>
+              {f.observacao?.trim() && (
+                <p className="line-clamp-2 pt-0.5 text-[10px] leading-4 text-[#7b857f]" title={f.observacao}>
+                  {f.observacao}
+                </p>
               )}
             </div>
             {f.status !== "Concluído" && (

@@ -362,6 +362,10 @@ table td {
 .freight-equipment {
   color: #465149;
 }
+.kanban-column-scroll {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
 /* O histórico incorporado não duplica bordas. */
 .panel > section.panel {
   border-width: 1px 0 0;
@@ -609,6 +613,9 @@ html.dark table td {
 }
 html.dark .freight-equipment {
   color: #d9e1dc !important;
+}
+html.dark .kanban-column {
+  background: #171a1e !important;
 }
 html.dark ::-webkit-scrollbar-thumb {
   background: #3a424b;
