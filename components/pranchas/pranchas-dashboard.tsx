@@ -78,6 +78,7 @@ import { FreightHistoryTable, MaintenanceHistoryTable } from "./history-tables";
 import { AccountMenu, AuthUser } from "@/components/auth/account-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { PranchasState } from "@/features/pranchas/persistence";
+import { obterMotoristasDisponiveis } from "@/features/pranchas/motoristas-config";
 
 const statuses: Status[] = ["Pendente", "Em Frete", "Concluído", "Cancelado"];
 const priorityStyle = {
@@ -749,16 +750,11 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         frete={startFrete}
         close={() => setStartFrete(null)}
         frotas={frotas}
-        motoristas={Array.from(
-          new Set([
-            "Rafael Costa",
-            "Paulo Gomes",
-            "José Carlos",
-            ...fretes.flatMap((item) =>
-              getEquipeTransporte(item).map((member) => member.motorista),
-            ),
-          ]),
-        ).filter(Boolean)}
+        motoristas={obterMotoristasDisponiveis(
+          fretes.flatMap((item) =>
+            getEquipeTransporte(item).map((member) => member.motorista),
+          ),
+        )}
         confirm={start}
       />
       <CancelFreteModal

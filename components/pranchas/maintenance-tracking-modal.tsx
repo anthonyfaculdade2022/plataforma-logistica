@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Check, Clock3, X } from "lucide-react";
 import { manutencaoSchema, ManutencaoInput } from "@/features/pranchas/schemas";
 import { Frete, Frota, getEquipeTransporte } from "@/features/pranchas/types";
+import { obterMotoristasDisponiveis } from "@/features/pranchas/motoristas-config";
 
 const choiceClass = (active: boolean) =>
   `flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border px-3.5 text-sm transition-all duration-200 ${
@@ -69,6 +70,11 @@ export function MaintenanceTrackingModal({
   const transferir = watch("transferir");
   const usarPreOs = watch("usarPreOs");
   const selectedFleet = frotas.find((item) => item.numero === frota);
+  const driverOptions = obterMotoristasDisponiveis(
+    fretes.flatMap((item) =>
+      getEquipeTransporte(item).map((member) => member.motorista),
+    ),
+  );
 
   useEffect(() => {
     if (open) setValue("frota", initialFrota || "");
@@ -135,6 +141,11 @@ export function MaintenanceTrackingModal({
             onSubmit={handleSubmit(submit)}
             className="min-h-0 flex-1 overflow-y-auto px-6 py-5"
           >
+            <datalist id="motoristas-transferencia">
+              {driverOptions.map((motorista) => (
+                <option value={motorista} key={motorista} />
+              ))}
+            </datalist>
             <div className="space-y-6">
               <section>
                 <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-[.12em] text-[#77827b]">
@@ -416,7 +427,7 @@ export function MaintenanceTrackingModal({
                           </label>
                           <label>
                             <span className="label">Novo Motorista</span>
-                            <input className="field" {...register("novoMotorista")} />
+                            <input list="motoristas-transferencia" className="field" {...register("novoMotorista")} />
                             {errors.novoMotorista && <small className="mt-1 block text-red-600">{errors.novoMotorista.message}</small>}
                           </label>
                         </div>

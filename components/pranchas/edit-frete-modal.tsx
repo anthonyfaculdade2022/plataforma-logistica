@@ -11,6 +11,7 @@ import {
   Frota,
   getEquipeTransporte,
 } from "@/features/pranchas/types";
+import { obterMotoristasDisponiveis } from "@/features/pranchas/motoristas-config";
 
 type EditableFrete = Pick<
   Frete,
@@ -130,6 +131,9 @@ export function EditFreteModal({
       "Transbordo 42015",
     ]),
   );
+  const driverOptions = obterMotoristasDisponiveis(
+    team.map((member) => member.motorista),
+  );
 
   return (
     <Dialog.Root open onOpenChange={(value) => !value && close()}>
@@ -152,6 +156,9 @@ export function EditFreteModal({
           <div className="grid gap-4 p-5 sm:grid-cols-2">
             <datalist id="equipamentos-edicao-etapa">
               {equipmentOptions.map((equipment) => <option value={equipment} key={equipment} />)}
+            </datalist>
+            <datalist id="motoristas-edicao-frete">
+              {driverOptions.map((motorista) => <option value={motorista} key={motorista} />)}
             </datalist>
             {frete.fluxoOperacao !== "sequencia" && <label className="sm:col-span-2">
               <span className="label">Equipamento</span>
@@ -281,6 +288,7 @@ export function EditFreteModal({
                     <label>
                       <span className="label">Motorista</span>
                       <input
+                        list="motoristas-edicao-frete"
                         className="field"
                         value={member.motorista}
                         onChange={(event) =>
