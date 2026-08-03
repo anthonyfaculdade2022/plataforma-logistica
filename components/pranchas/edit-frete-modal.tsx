@@ -6,6 +6,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import {
   Equipamento,
   EquipeTransporte,
+  EtapaFrete,
   Frete,
   Frota,
   getEquipeTransporte,
@@ -20,6 +21,7 @@ type EditableFrete = Pick<
   | "responsavel"
   | "setor"
   | "observacao"
+  | "etapas"
   | "equipeTransporte"
 >;
 
@@ -30,13 +32,14 @@ const emptyData: EditableFrete = {
   responsavel: "",
   setor: "",
   observacao: "",
+  etapas: [],
   equipeTransporte: [],
 };
 
 export function EditFreteModal({
   frete,
   frotas,
-  equipamentos: _,
+  equipamentos,
   close,
   save,
 }: {
@@ -59,6 +62,16 @@ export function EditFreteModal({
       responsavel: frete.responsavel,
       setor: frete.setor,
       observacao: frete.observacao,
+      etapas: frete.etapas?.map((etapa, index) => ({
+        ...etapa,
+        equipamento:
+          etapa.equipamento ||
+          (index === 0
+            ? [frete.equipamentoTipo, frete.equipamentoCodigo]
+                .filter(Boolean)
+                .join(" ")
+            : ""),
+      })),
       equipeTransporte: getEquipeTransporte(frete),
     });
   }, [frete]);
@@ -77,6 +90,17 @@ export function EditFreteModal({
         i === index ? { ...member, [field]: value } : member,
       ),
     }));
+  const updateStage = (
+    index: number,
+    field: keyof Pick<EtapaFrete, "equipamento" | "origem" | "destino" | "observacao">,
+    value: string,
+  ) =>
+    setData((current) => ({
+      ...current,
+      etapas: (current.etapas || []).map((stage, stageIndex) =>
+        stageIndex === index ? { ...stage, [field]: value } : stage,
+      ),
+    }));
   const team = data.equipeTransporte || [];
   const teamValid =
     (frete.status === "Pendente" || team.length > 0) &&
@@ -90,7 +114,22 @@ export function EditFreteModal({
     data.solicitante.trim() &&
     data.responsavel.trim() &&
     data.setor.trim() &&
+    (frete.fluxoOperacao !== "sequencia" ||
+      (data.etapas || []).every(
+        (stage) => stage.equipamento?.trim() && stage.origem.trim() && stage.destino.trim(),
+      )) &&
     teamValid;
+
+  const equipmentOptions = Array.from(
+    new Set([
+      ...equipamentos.map((item) => `${item.tipo} ${item.codigo}`.trim()),
+      "Colhedora 61065",
+      "Pá Carregadeira 41002",
+      "Trator 52015",
+      "Escavadeira 31001",
+      "Transbordo 42015",
+    ]),
+  );
 
   return (
     <Dialog.Root open onOpenChange={(value) => !value && close()}>
@@ -111,7 +150,10 @@ export function EditFreteModal({
             </button>
           </header>
           <div className="grid gap-4 p-5 sm:grid-cols-2">
-            <label className="sm:col-span-2">
+            <datalist id="equipamentos-edicao-etapa">
+              {equipmentOptions.map((equipment) => <option value={equipment} key={equipment} />)}
+            </datalist>
+            {frete.fluxoOperacao !== "sequencia" && <label className="sm:col-span-2">
               <span className="label">Equipamento</span>
               <input
                 className="field"
@@ -119,7 +161,7 @@ export function EditFreteModal({
                 value={data.equipamentoTipo || ""}
                 onChange={(event) => set("equipamentoTipo", event.target.value)}
               />
-            </label>
+            </label>}
             <label>
               <span className="label">Origem</span>
               <input
@@ -136,6 +178,42 @@ export function EditFreteModal({
                 onChange={(event) => set("destino", event.target.value)}
               />
             </label>
+
+            {frete.fluxoOperacao === "sequencia" && Boolean(data.etapas?.length) && (
+              <section className="space-y-3 rounded-xl border border-[#e4e9e5] bg-[#fafbfa] p-4 sm:col-span-2">
+                <div>
+                  <h3 className="text-sm font-semibold">Sequência de Fretes</h3>
+                  <p className="mt-1 text-xs text-[#78837c]">Edite o equipamento e a rota de cada etapa individualmente.</p>
+                </div>
+                {(data.etapas || []).map((stage, index) => (
+                  <div key={stage.id} className="grid gap-3 rounded-lg border bg-white p-3 sm:grid-cols-2">
+                    <p className="text-xs font-semibold text-[#414943] sm:col-span-2">Etapa {index + 1}</p>
+                    <label className="sm:col-span-2">
+                      <span className="label">Equipamento</span>
+                      <input
+                        list="equipamentos-edicao-etapa"
+                        className="field"
+                        value={stage.equipamento || ""}
+                        onChange={(event) => updateStage(index, "equipamento", event.target.value)}
+                        placeholder="Pesquisar por nome ou número..."
+                      />
+                    </label>
+                    <label>
+                      <span className="label">Origem</span>
+                      <input className="field" value={stage.origem} onChange={(event) => updateStage(index, "origem", event.target.value)} />
+                    </label>
+                    <label>
+                      <span className="label">Destino</span>
+                      <input className="field" value={stage.destino} onChange={(event) => updateStage(index, "destino", event.target.value)} />
+                    </label>
+                    <label className="sm:col-span-2">
+                      <span className="label">Observação</span>
+                      <input className="field" value={stage.observacao || ""} onChange={(event) => updateStage(index, "observacao", event.target.value)} />
+                    </label>
+                  </div>
+                ))}
+              </section>
+            )}
 
             <section className="rounded-xl border border-[#e4e9e5] bg-[#fafbfa] p-4 sm:col-span-2">
               <div className="mb-3 flex items-center justify-between">

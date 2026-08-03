@@ -7,6 +7,7 @@ export type EquipeTransporte = {
 };
 export type EtapaFrete = {
   id: string;
+  equipamento?: string;
   origem: string;
   destino: string;
   observacao?: string;

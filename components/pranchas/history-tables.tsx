@@ -63,6 +63,7 @@ const statusClass: Record<Status, string> = {
   Cancelado: "border-red-200 bg-red-50 text-red-700",
 };
 const equipmentText = (f: Frete) =>
+  f.etapas?.[f.etapaAtual || 0]?.equipamento?.trim() ||
   [f.equipamentoTipo, f.equipamentoCodigo].filter(Boolean).join(" ").trim();
 const clipped = (value?: string, fallback = "—") => (
   <span

@@ -105,8 +105,21 @@ const operationKey = (value = new Date()) => {
 };
 const operationLabel = (key: string) =>
   `Operação ${key.slice(6, 8)}/${key.slice(4, 6)}/${key.slice(0, 4)}`;
-const equipmentText = (f: Frete) =>
+const globalEquipmentText = (f: Frete) =>
   [f.equipamentoTipo, f.equipamentoCodigo].filter(Boolean).join(" ").trim();
+const stageEquipmentText = (f: Frete, index = f.etapaAtual || 0) =>
+  f.etapas?.[index]?.equipamento?.trim() || globalEquipmentText(f);
+const equipmentText = (f: Frete) => stageEquipmentText(f);
+const sequenceText = (f: Frete) =>
+  f.fluxoOperacao === "sequencia" && f.etapas?.length
+    ? f.etapas
+        .map((etapa, index) => {
+          const equipment = etapa.equipamento?.trim() || globalEquipmentText(f) || "Equipamento não informado";
+          const numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+          return `${numbers[index] || `${index + 1}.`} ${equipment}\n${etapa.origem} → ${etapa.destino}${etapa.observacao?.trim() ? ` | ${etapa.observacao.trim()}` : ""}`;
+        })
+        .join("\n\n")
+    : "";
 const freightText = (f: Frete) => {
   const equipment = equipmentText(f);
   if (!equipment) return `Frete de ${f.origem} para ${f.destino}.`;
@@ -117,7 +130,9 @@ const freightText = (f: Frete) => {
   return `Frete ${feminine ? "da" : "do"} ${equipment} da ${f.origem} para ${f.destino}.`;
 };
 const withObservation = (f: Frete) =>
-  `${freightText(f)}${f.observacao.trim() ? ` | ${f.observacao.trim()}` : ""}`;
+  f.fluxoOperacao === "sequencia" && f.etapas?.length
+    ? sequenceText(f)
+    : `${freightText(f)}${f.observacao.trim() ? ` | ${f.observacao.trim()}` : ""}`;
 type HistoryPeriod =
   | "Todos"
   | "Hoje"
@@ -254,6 +269,11 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             f.solicitante,
             f.equipamentoTipo,
             f.equipamentoCodigo,
+            ...(f.etapas || []).flatMap((etapa) => [
+              etapa.equipamento,
+              etapa.origem,
+              etapa.destino,
+            ]),
           ]
             .join(" ")
             .toLowerCase()
@@ -270,11 +290,16 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
       setEditFrete(null);
       return;
     }
+    const activeEditedStage = data.etapas?.[editFrete.etapaAtual || 0];
     const normalized = {
         ...data,
+        origem: activeEditedStage?.origem || data.origem,
+        destino: activeEditedStage?.destino || data.destino,
+        observacao: activeEditedStage?.observacao ?? data.observacao,
         frota: data.equipeTransporte?.[0]?.frota,
         motorista: data.equipeTransporte?.[0]?.motorista,
         equipamentoId: undefined,
+        equipamentoTipo: activeEditedStage?.equipamento || data.equipamentoTipo,
         equipamentoCodigo: undefined,
       },
       n = nowParts(),
@@ -287,6 +312,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         "responsavel",
         "setor",
         "observacao",
+        "etapas",
       ] as const,
       changes = fields
         .filter(
@@ -391,6 +417,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
       origem: next.origem,
       destino: next.destino,
       observacao: next.observacao || "",
+      equipamentoTipo: next.equipamento || globalEquipmentText(frete),
+      equipamentoCodigo: undefined,
       etapaAtual: current + 1,
       inicioDeslocamento: `${n.date} ${n.time}`,
       etapas: frete.etapas?.map((etapa, index) =>
@@ -546,7 +574,9 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         ? ` | ⚠️ Pré-OS: ${fleet.numeroPreOs} - ${fleet.servicoPreOs}`
         : "";
       if (movingFreight)
-        return `*${config.numero}* - ${withObservation(movingFreight)}${preOs}`;
+        return movingFreight.fluxoOperacao === "sequencia" && movingFreight.etapas?.length
+          ? `*${config.numero}*\n\n${sequenceText(movingFreight)}${preOs}`
+          : `*${config.numero}* - ${withObservation(movingFreight)}${preOs}`;
       return `*${config.numero}* - Disponível${fleet?.localDisponivel ? ` ${fleet.localDisponivel}` : ""}${preOs}`;
     });
     const orderedMaintenance = [...maintenance].sort(
@@ -2370,6 +2400,9 @@ function FreteDrawer({
                       <p className="mt-1 text-sm font-medium text-[#414944]">
                         {etapa.origem} → {etapa.destino}
                       </p>
+                      <p className="mt-1 text-xs font-medium text-[#657069]">
+                        {etapa.equipamento || globalEquipmentText(frete) || "Equipamento não informado"}
+                      </p>
                       {etapa.observacao && (
                         <p className="mt-1 text-xs text-[#737d77]">{etapa.observacao}</p>
                       )}
@@ -2445,7 +2478,7 @@ function FreteDrawer({
 function NewFrete({
   open,
   close,
-  equipamentos: _,
+  equipamentos,
   add,
 }: {
   open: boolean;
@@ -2466,6 +2499,7 @@ function NewFrete({
   });
   const newStage = (): EtapaFrete => ({
     id: `ET-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    equipamento: "",
     origem: "",
     destino: "",
     observacao: "",
@@ -2479,10 +2513,11 @@ function NewFrete({
     setValue("origem", first?.origem || "", { shouldValidate: false });
     setValue("destino", first?.destino || "", { shouldValidate: false });
     setValue("observacao", first?.observacao || "", { shouldValidate: false });
+    setValue("equipamentoTipo", first?.equipamento || "", { shouldValidate: false });
   };
   const updateStage = (
     index: number,
-    field: "origem" | "destino" | "observacao",
+    field: "equipamento" | "origem" | "destino" | "observacao",
     value: string,
   ) => {
     setStages((items) => {
@@ -2507,9 +2542,9 @@ function NewFrete({
   const submit = (d: AgendamentoInput) => {
     if (
       flowType === "sequencia" &&
-      (stages.length < 2 || stages.some((stage) => !stage.origem.trim() || !stage.destino.trim()))
+      (stages.length < 2 || stages.some((stage) => !stage.equipamento?.trim() || !stage.origem.trim() || !stage.destino.trim()))
     ) {
-      setStageError("Informe origem e destino em pelo menos duas etapas.");
+      setStageError("Informe equipamento, origem e destino em pelo menos duas etapas.");
       return;
     }
     const sequence = flowType === "sequencia" ? stages : undefined;
@@ -2518,6 +2553,7 @@ function NewFrete({
       origem: sequence?.[0].origem || d.origem,
       destino: sequence?.[0].destino || d.destino,
       observacao: sequence?.[0].observacao || d.observacao,
+      equipamentoTipo: sequence?.[0].equipamento || d.equipamentoTipo,
       id: `FR-${1060 + Math.floor(Math.random() * 90)}`,
       operacao: operationKey(),
       data: new Date(d.data + "T12:00").toLocaleDateString("pt-BR"),
@@ -2545,6 +2581,16 @@ function NewFrete({
     "Frente 97",
     "Pátio",
   ];
+  const equipmentOptions = Array.from(
+    new Set([
+      ...equipamentos.map((item) => `${item.tipo} ${item.codigo}`.trim()),
+      "Colhedora 61065",
+      "Pá Carregadeira 41002",
+      "Trator 52015",
+      "Escavadeira 31001",
+      "Transbordo 42015",
+    ]),
+  );
   return (
     <Dialog.Root open={open} onOpenChange={(value) => !value && close()}>
       <Dialog.Portal>
@@ -2577,14 +2623,14 @@ function NewFrete({
                   Informações do frete
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label>
+                  {flowType === "unico" && <label>
                     <span className="label">Equipamento</span>
                     <input
                       className="field"
                       placeholder="Ex.: Pá Carregadeira 41002"
                       {...register("equipamentoTipo")}
                     />
-                  </label>
+                  </label>}
                   <label>
                     <span className="label">Data</span>
                     <input
@@ -2674,6 +2720,11 @@ function NewFrete({
                         <option value={location} key={location} />
                       ))}
                     </datalist>
+                    <datalist id="equipamentos-etapa">
+                      {equipmentOptions.map((equipment) => (
+                        <option value={equipment} key={equipment} />
+                      ))}
+                    </datalist>
                     {stages.map((stage, index) => (
                       <div
                         key={stage.id}
@@ -2731,6 +2782,16 @@ function NewFrete({
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="sm:col-span-2">
+                            <span className="label">Equipamento</span>
+                            <input
+                              list="equipamentos-etapa"
+                              className="field"
+                              placeholder="Pesquisar por nome ou número..."
+                              value={stage.equipamento || ""}
+                              onChange={(event) => updateStage(index, "equipamento", event.target.value)}
+                            />
+                          </label>
                           <label>
                             <span className="label">Origem</span>
                             <input
