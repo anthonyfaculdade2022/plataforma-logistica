@@ -79,6 +79,7 @@ import { AccountMenu, AuthUser } from "@/components/auth/account-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { PranchasState } from "@/features/pranchas/persistence";
 import { obterMotoristasDisponiveis } from "@/features/pranchas/motoristas-config";
+import { Button } from "@/components/ui/system";
 
 const statuses: Status[] = ["Pendente", "Em Frete", "Concluído", "Cancelado"];
 const priorityStyle = {
@@ -665,7 +666,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 onCancel={setCancelFrete}
                 onFinishMaintenance={finishMaintenance}
               />
-              <section className="grid items-start gap-4 lg:grid-cols-2">
+              <section aria-label="Apoio operacional" className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)]">
                 <FleetStatus
                   frotas={frotas}
                   fretes={fretes}
@@ -675,7 +676,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                   onMaintenance={(frota) => { setMaintenanceFrota(frota.numero); setMaintenanceOpen(true); }}
                   onLocation={(numero, localDisponivel) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, localDisponivel } : item))}
                 />
-                <Whatsapp flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} />
+                <Whatsapp compact onOpen={() => setWhatsappOpen(true)} recordCount={fretes.filter((item) => item.status === "Pendente" || item.status === "Em Frete").length} flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} />
               </section>
               <section className="panel overflow-hidden">
                 <div className="flex flex-col justify-between gap-2 px-4 py-3 sm:flex-row sm:items-center">
@@ -892,20 +893,14 @@ function Header({
           </div>
         </div>
         <div className="header-actions flex flex-wrap gap-2">
-          <button
-            onClick={onMaintenance}
-            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
-          >
+          <Button onClick={onMaintenance} variant="secondary">
             <Wrench size={16} />
             Manutenção
-          </button>
-          <button
-            onClick={onNew}
-            className="primary-action flex h-9 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md"
-          >
+          </Button>
+          <Button onClick={onNew} variant="primary">
             <Plus size={16} />
             Novo Frete
-          </button>
+          </Button>
         </div>
       </header>
   );
@@ -930,7 +925,7 @@ function OperationToolbar({ search, setSearch, filter, setFilter }: {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 w-full bg-transparent text-sm outline-none"
-            placeholder="Pesquisar frota, equipamento ou motorista..."
+            placeholder="Pesquisar frota, motorista, frente ou equipamento..."
           />
         </label>
         <div className="relative">
@@ -1761,6 +1756,9 @@ function Whatsapp({
   download,
   send,
   copied,
+  compact = false,
+  onOpen,
+  recordCount = 0,
 }: {
   flow: string;
   flowRef: React.RefObject<HTMLDivElement | null>;
@@ -1769,6 +1767,9 @@ function Whatsapp({
   download: () => void;
   send: () => void;
   copied: boolean;
+  compact?: boolean;
+  onOpen?: () => void;
+  recordCount?: number;
 }) {
   const [lastGenerated, setLastGenerated] = useState<string | null>(null);
   const handleGenerate = () => {
@@ -1781,7 +1782,31 @@ function Whatsapp({
         minute: "2-digit",
       }).format(new Date()),
     );
+    onOpen?.();
   };
+  if (compact) {
+    return (
+      <section className="panel p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
+              <MessageCircle size={16} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="ds-h3">ProgramaÃ§Ã£o WhatsApp</h2>
+              <p className="ds-caption mt-0.5">{recordCount} registro(s) na operaÃ§Ã£o</p>
+            </div>
+          </div>
+          <Button onClick={handleGenerate} variant="primary" className="shrink-0">
+            <Send size={14} /> Gerar
+          </Button>
+        </div>
+        <p className="ds-caption mt-3 border-t border-[var(--ds-border)] pt-2">
+          {lastGenerated ? `Ãšltima geraÃ§Ã£o: ${lastGenerated.replace(",", " Ã s")}` : "Ainda nÃ£o gerada"}
+        </p>
+      </section>
+    );
+  }
   return (
     <section className="panel p-4">
       <div className="flex items-center gap-3">
@@ -1936,26 +1961,26 @@ function FleetStatus({
           placeholder="Pesquisar prancha, frota ou motorista..."
         />
       </label>
-      <div className="grid gap-2.5">
+      <div className="grid gap-1">
         {filtered.map((f) => (
           <div
             role="button"
             tabIndex={0}
             onClick={() => setSelectedFleet(f)}
             onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedFleet(f); }}
-            className={`fleet-mini-card group relative rounded-xl border border-[#e8ece9] bg-white p-3.5 outline-none ${openMenu === f.numero ? "z-30" : "z-0"}`}
+            className={`fleet-mini-card group relative rounded-lg bg-white px-3 py-2.5 outline-none ${openMenu === f.numero ? "z-30" : "z-0"}`}
             key={f.numero}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-base font-semibold tabular-nums text-[#303632]">
+                <p className="text-sm font-semibold tabular-nums text-[#303632]">
                   Frota {f.numero}
                 </p>
                 <p className="mt-0.5 text-[11px] font-medium text-[#7a847e]">
                   Prancha {f.prancha}
                 </p>
                 {f.tipo && (
-                  <span className="mt-1.5 inline-flex rounded-md bg-[#f1f3f2] px-1.5 py-0.5 text-[9px] font-medium text-[#747d78]">
+                  <span className="ml-1.5 inline-flex rounded-md bg-[#f1f3f2] px-1.5 py-0.5 text-[9px] font-medium text-[#747d78]">
                     Bitola Aberta
                   </span>
                 )}
