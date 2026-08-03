@@ -748,6 +748,16 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         frete={startFrete}
         close={() => setStartFrete(null)}
         frotas={frotas}
+        motoristas={Array.from(
+          new Set([
+            "Rafael Costa",
+            "Paulo Gomes",
+            "José Carlos",
+            ...fretes.flatMap((item) =>
+              getEquipeTransporte(item).map((member) => member.motorista),
+            ),
+          ]),
+        ).filter(Boolean)}
         confirm={start}
       />
       <CancelFreteModal
@@ -3130,21 +3140,57 @@ function FleetCombobox({
           </div>
         )}
       </div>
-      {selected && (
-        <div className="mt-3 rounded-xl border border-[#e8ebe9] bg-[#fafbfa] p-4">
-          <p className="flex items-center gap-2 text-sm font-medium">
-            <Truck size={15} />
-            Frota {selected.numero}
-          </p>
-          <p className="mt-2 pl-[23px] text-xs text-[#68716c]">
-            Prancha {selected.prancha}
-          </p>
-          {selected.tipo && (
-            <p className="mt-2 flex items-center gap-2 pl-[23px] text-xs text-[#68716c]">
-              <Wrench size={14} />
-              {selected.tipo}
-            </p>
-          )}
+    </div>
+  );
+}
+function DriverCombobox({
+  motoristas,
+  value,
+  onChange,
+}: {
+  motoristas: string[];
+  value?: string;
+  onChange: (value: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const options = motoristas.filter((motorista) =>
+    motorista.toLowerCase().includes(query.toLowerCase()),
+  );
+  return (
+    <div className="relative">
+      <Search size={15} className="pointer-events-none absolute left-3 top-3.5 text-[#8a938e]" />
+      <input
+        readOnly
+        className="field cursor-pointer pl-9"
+        value={open ? query : value || ""}
+        onFocus={() => { setOpen(true); setQuery(""); }}
+        onClick={() => setOpen(true)}
+        placeholder="Pesquisar motorista..."
+      />
+      {open && (
+        <div className="absolute z-30 mt-2 max-h-52 w-full overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
+          <label className="mb-1.5 flex items-center gap-2 rounded-lg border border-[#e6eae7] px-2.5">
+            <Search size={13} className="text-[#8a938e]" />
+            <input
+              autoFocus
+              className="h-9 w-full bg-transparent text-xs outline-none"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Digite o nome..."
+            />
+          </label>
+          {options.map((motorista) => (
+            <button
+              type="button"
+              key={motorista}
+              onClick={() => { onChange(motorista); setOpen(false); setQuery(""); }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-[#f7f9f7]"
+            >
+              <UserRound size={14} className="text-[#78827c]" /> {motorista}
+            </button>
+          ))}
+          {!options.length && <p className="p-3 text-center text-xs text-[#8b948f]">Nenhum motorista encontrado</p>}
         </div>
       )}
     </div>
@@ -3154,11 +3200,13 @@ function StartModal({
   frete,
   close,
   frotas,
+  motoristas,
   confirm,
 }: {
   frete: Frete | null;
   close: () => void;
   frotas: Frota[];
+  motoristas: string[];
   confirm: (f: Frete, d: DeslocamentoInput) => void;
 }) {
   const [equipe, setEquipe] = useState<EquipeTransporte[]>([
@@ -3201,22 +3249,22 @@ function StartModal({
       description="Vincule uma ou mais pranchas com seus motoristas"
       wide
     >
-      <form onSubmit={submitTeam} className="space-y-4 p-5">
-        <div>
-          <h3 className="text-sm font-semibold">Equipe de Transporte</h3>
-          <p className="mt-1 text-xs text-[#77827b]">
-            Cada motorista permanece obrigatoriamente vinculado à sua frota.
-          </p>
-        </div>
-        <div className="space-y-3">
+      <form onSubmit={submitTeam} className="flex max-h-[72vh] flex-col">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
+          <div>
+            <h3 className="text-sm font-semibold">Montagem da equipe</h3>
+            <p className="mt-1 text-xs text-[#77827b]">
+              Selecione a frota e o motorista de cada conjunto.
+            </p>
+          </div>
           {equipe.map((member, index) => (
             <div
               key={index}
-              className="rounded-xl border border-[#e5e9e6] bg-[#fafbfa] p-4"
+              className="rounded-xl border border-[#e1e6e3] bg-[#fafbfa] p-3.5 shadow-[0_1px_2px_rgba(18,24,21,.03)]"
             >
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs font-semibold text-[#4f5953]">
-                  Prancha {index + 1}
+              <div className="mb-2.5 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-[#4f5953]">
+                  Equipe {index + 1}
                 </p>
                 {equipe.length > 1 && (
                   <button
@@ -3234,7 +3282,7 @@ function StartModal({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label>
-                  <span className="label">Frota</span>
+                  <span className="label inline-flex items-center gap-1.5"><Truck size={13} /> Frota</span>
                   <FleetCombobox
                     frotas={frotas.filter(
                       (item) =>
@@ -3249,31 +3297,43 @@ function StartModal({
                   />
                 </label>
                 <label>
-                  <span className="label">Motorista</span>
-                  <input
-                    className="field"
+                  <span className="label inline-flex items-center gap-1.5"><UserRound size={13} /> Motorista</span>
+                  <DriverCombobox
+                    motoristas={motoristas.filter(
+                      (driver) =>
+                        !equipe.some(
+                          (selectedMember, selectedIndex) =>
+                            selectedIndex !== index && selectedMember.motorista === driver,
+                        ),
+                    )}
                     value={member.motorista}
-                    onChange={(event) =>
-                      updateMember(index, "motorista", event.target.value)
-                    }
-                    placeholder="Nome do motorista"
+                    onChange={(value) => updateMember(index, "motorista", value)}
                   />
                 </label>
               </div>
             </div>
           ))}
+          <button
+            type="button"
+            onClick={() =>
+              setEquipe((items) => [...items, { frota: "", motorista: "" }])
+            }
+            className="mx-auto flex w-full max-w-sm items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#cfd7d2] bg-white px-4 py-2.5 text-xs font-semibold text-[#59645d] transition-colors hover:border-[#aebbb3] hover:bg-[#f6f8f6]"
+          >
+            <Plus size={14} /> Adicionar outra prancha
+          </button>
+          {teamError && <p className="text-center text-xs text-red-600">{teamError}</p>}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            setEquipe((items) => [...items, { frota: "", motorista: "" }])
-          }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#dfe4e1] px-3 py-2 text-xs font-medium text-[#59645d] hover:bg-[#f6f8f6]"
-        >
-          <Plus size={14} /> Adicionar Prancha
-        </button>
-        {teamError && <p className="text-xs text-red-600">{teamError}</p>}
-        <div className="flex gap-3 pt-3">
+        <footer className="shrink-0 border-t border-[#e8ece9] bg-white px-5 py-4">
+          <div className="mb-3 flex items-center justify-between rounded-lg bg-[#f7f9f7] px-3 py-2 text-xs">
+            <span className="font-semibold text-[#4c5650]">Resumo</span>
+            <span className="text-[#727d76]">
+              Pranchas: <strong className="text-[#303732]">{equipe.filter((item) => item.frota).length}</strong>
+              <span className="mx-2 text-[#c4ccc7]">•</span>
+              Motoristas: <strong className="text-[#303732]">{equipe.filter((item) => item.motorista).length}</strong>
+            </span>
+          </div>
+          <div className="flex gap-3">
           <button
             type="button"
             onClick={close}
@@ -3284,7 +3344,8 @@ function StartModal({
           <button className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white">
             Confirmar
           </button>
-        </div>
+          </div>
+        </footer>
       </form>
     </Modal>
   );
