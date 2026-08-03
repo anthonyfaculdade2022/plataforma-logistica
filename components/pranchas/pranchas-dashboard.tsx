@@ -2207,6 +2207,7 @@ function Modal({
   description,
   children,
   wide = false,
+  floatingContent = false,
 }: {
   open: boolean;
   close: () => void;
@@ -2214,9 +2215,10 @@ function Modal({
   description: string;
   children: React.ReactNode;
   wide?: boolean;
+  floatingContent?: boolean;
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={(v) => !v && close()}>
+    <Dialog.Root open={open} modal={!floatingContent} onOpenChange={(v) => !v && close()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-[#101914]/40" />
         <Dialog.Content
@@ -3225,7 +3227,7 @@ function DriverCombobox({
       />
       <FloatingDropdown open={open} anchorRef={anchorRef}>
         <div className="max-h-[inherit] overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
-          <label className="mb-1.5 flex items-center gap-2 rounded-lg border border-[#e6eae7] px-2.5">
+          <label className="sticky top-0 z-10 mb-1.5 flex items-center gap-2 rounded-lg border border-[#e6eae7] bg-white px-2.5 pointer-events-auto">
             <Search size={13} className="text-[#8a938e]" />
             <input
               autoFocus
@@ -3303,6 +3305,7 @@ function StartModal({
       title="Iniciar Deslocamento"
       description=""
       wide
+      floatingContent
     >
       <form onSubmit={submitTeam} className="flex max-h-[72vh] flex-col">
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6">
