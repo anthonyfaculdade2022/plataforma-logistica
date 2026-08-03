@@ -606,7 +606,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
   }
   return (
     <div className="min-h-screen bg-[#f5f7f5] lg:flex">
-      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} onEquipment={() => setEquipmentOpen(true)} onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }} />
+      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} onEquipment={() => setEquipmentOpen(true)} onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }} onFleet={() => setFleetOpen(true)} onWhatsapp={() => setWhatsappOpen(true)} />
       <main className="min-w-0 flex-1 lg:ml-[238px]">
         <MobileHeader open={() => setMobile(true)} />
         <div className="mx-auto max-w-[1920px] p-4 sm:p-6 lg:px-7 lg:py-6">
@@ -626,8 +626,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
           />
           <Indicators fretes={fretes} manutencoes={manutencoes} />
           <div className="mt-6 grid gap-5">
-            <div className="min-w-0 space-y-6">
-              <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="min-w-0 space-y-4">
+              <div className="hidden">
                 <button onClick={() => setFleetOpen(true)} className="workspace-action"><Truck size={15} /> Pranchas</button>
                 <button onClick={() => setWhatsappOpen(true)} className="workspace-action"><MessageCircle size={15} /> Gerar Programação</button>
               </div>
@@ -825,12 +825,16 @@ function Sidebar({
   user,
   onEquipment,
   onMaintenance,
+  onFleet,
+  onWhatsapp,
 }: {
   mobile: boolean;
   close: () => void;
   user: AuthUser;
   onEquipment: () => void;
   onMaintenance: () => void;
+  onFleet: () => void;
+  onWhatsapp: () => void;
 }) {
   return (
     <>
@@ -857,6 +861,12 @@ function Sidebar({
           </button>
           <button onClick={onMaintenance} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
             <Wrench size={18} /> Manutenção
+          </button>
+          <button onClick={onFleet} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
+            <CircleGauge size={18} /> Status das Pranchas
+          </button>
+          <button onClick={onWhatsapp} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
+            <MessageCircle size={18} /> Programação
           </button>
         </nav>
         <div className="mt-auto space-y-2.5">
@@ -1103,7 +1113,7 @@ function Kanban({
   );
   return (
     <section>
-      <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <div className="hidden">
         <div>
           <h2 className="font-semibold">Operação atual</h2>
           <p className="mt-1 text-xs text-[#7a867f]">

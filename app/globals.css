@@ -314,7 +314,7 @@ table td {
 }
 
 /* Dashboard operacional: o Kanban ocupa o foco e os recursos auxiliares abrem em painéis. */
-.header-actions button:not(:last-child) {
+.header-actions button:first-child {
   display: none;
 }
 .header-copy > p {
