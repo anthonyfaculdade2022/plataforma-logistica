@@ -622,11 +622,12 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             filter={filter}
             setFilter={setFilter}
             onNew={() => setNewOpen(true)}
-            onEquipment={() => setEquipmentOpen(true)}
             onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }}
+            onFleet={() => { setFleetViewFilter(null); setFleetOpen(true); }}
+            onWhatsapp={() => setWhatsappOpen(true)}
           />
           <Indicators frotas={frotas} onSelect={(value) => { setFleetViewFilter(value); setFleetOpen(true); }} />
-          <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="mt-6 grid gap-5">
             <div className="min-w-0 space-y-4">
               <Kanban
                 fretes={filtered}
@@ -658,49 +659,6 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
               />}
               </section>
             </div>
-            <aside className="grid min-w-0 gap-5 md:grid-cols-2 xl:sticky xl:top-5 xl:grid-cols-1">
-              <Whatsapp
-                flow={flow}
-                flowRef={flowRef}
-                generate={generate}
-                copy={copy}
-                download={download}
-                send={send}
-                copied={copied}
-              />
-              <FleetStatus
-                frotas={frotas}
-                fretes={fretes}
-                manutencoes={manutencoes}
-                onPreOs={setPreOsFrota}
-                onNoDriver={(numero) =>
-                  setFrotas((items) =>
-                    items.map((item) =>
-                      item.numero === numero
-                        ? {
-                            ...item,
-                            status: "Disponível",
-                            semMotorista: true,
-                          }
-                        : item,
-                    ),
-                  )
-                }
-                onMaintenance={(frota) => {
-                  setMaintenanceFrota(frota.numero);
-                  setMaintenanceOpen(true);
-                }}
-                onLocation={(numero, localDisponivel) =>
-                  setFrotas((items) =>
-                    items.map((item) =>
-                      item.numero === numero
-                        ? { ...item, localDisponivel }
-                        : item,
-                    ),
-                  )
-                }
-              />
-            </aside>
           </div>
         </div>
       </main>
@@ -876,16 +834,18 @@ function Header({
   filter,
   setFilter,
   onNew,
-  onEquipment,
   onMaintenance,
+  onFleet,
+  onWhatsapp,
 }: {
   search: string;
   setSearch: (v: string) => void;
   filter: string;
   setFilter: (v: Status | "Todos") => void;
   onNew: () => void;
-  onEquipment: () => void;
   onMaintenance: () => void;
+  onFleet: () => void;
+  onWhatsapp: () => void;
 }) {
   const [lastUpdated, setLastUpdated] = useState(
     new Date().toLocaleTimeString("pt-BR", {
@@ -927,11 +887,18 @@ function Header({
         </div>
         <div className="header-actions flex flex-wrap gap-2">
           <button
-            onClick={onEquipment}
+            onClick={onFleet}
             className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
           >
-            <Tractor size={16} />
-            Equipamentos
+            <CircleGauge size={16} />
+            Status das Pranchas
+          </button>
+          <button
+            onClick={onWhatsapp}
+            className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
+          >
+            <MessageCircle size={16} />
+            Programação
           </button>
           <button
             onClick={onMaintenance}
