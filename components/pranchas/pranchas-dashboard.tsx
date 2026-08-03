@@ -626,12 +626,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }}
           />
           <Indicators frotas={frotas} onSelect={(value) => { setFleetViewFilter(value); setFleetOpen(true); }} />
-          <div className="mt-6 grid gap-5">
+          <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0 space-y-4">
-              <div className="hidden">
-                <button onClick={() => { setFleetViewFilter(null); setFleetOpen(true); }} className="workspace-action"><Truck size={15} /> Pranchas</button>
-                <button onClick={() => setWhatsappOpen(true)} className="workspace-action"><MessageCircle size={15} /> Gerar Programação</button>
-              </div>
               <Kanban
                 fretes={filtered}
                 frotas={frotas}
@@ -662,7 +658,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
               />}
               </section>
             </div>
-            <aside className="hidden">
+            <aside className="grid min-w-0 gap-5 md:grid-cols-2 xl:sticky xl:top-5 xl:grid-cols-1">
               <Whatsapp
                 flow={flow}
                 flowRef={flowRef}
