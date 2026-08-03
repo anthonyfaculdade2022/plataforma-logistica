@@ -252,6 +252,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
     [mobile, setMobile] = useState(false),
     [whatsappOpen, setWhatsappOpen] = useState(false),
     [fleetOpen, setFleetOpen] = useState(false),
+    [selectedFleetDetails, setSelectedFleetDetails] = useState<Frota | null>(null),
     [fleetViewFilter, setFleetViewFilter] = useState<"disponiveis" | "sem-motorista" | "em-frete" | "manutencao" | "pre-os" | null>(null),
     [historyExpanded, setHistoryExpanded] = useState(false),
     [historyTab, setHistoryTab] = useState<"fretes" | "manutencao">("fretes");
@@ -669,30 +670,24 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 driverFilter={driverFilter} setDriverFilter={setDriverFilter}
                 clear={() => { setSearch(""); setFilter("Todos"); setFrontFilter("Todos"); setDriverFilter("Todos"); }}
               />
-              <section className="operations-layout grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(250px,1fr)]">
               <Kanban
                 fretes={filtered}
                 frotas={frotas}
                 manutencoes={manutencoes}
                 onFrete={setSelected}
-                onEdit={setEditFrete}
-                onCancel={setCancelFrete}
-                onFinishMaintenance={finishMaintenance}
+                onFleet={setSelectedFleetDetails}
                 onNewFrete={() => setNewOpen(true)}
                 onNewMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }}
               />
-              <aside aria-label="Painel operacional" className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-1">
-                <FleetStatus
-                  frotas={frotas}
-                  fretes={fretes}
-                  manutencoes={manutencoes}
-                  onPreOs={setPreOsFrota}
-                  onNoDriver={(numero) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, status: "Disponível", semMotorista: true } : item))}
-                  onMaintenance={(frota) => { setMaintenanceFrota(frota.numero); setMaintenanceOpen(true); }}
-                  onLocation={(numero, localDisponivel) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, localDisponivel } : item))}
-                />
-                <Whatsapp compact onOpen={() => setWhatsappOpen(true)} recordCount={fretes.filter((item) => item.status === "Pendente" || item.status === "Em Frete").length} flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} />
-              </aside>
+              <section aria-label="Painéis de apoio" className="grid gap-3 lg:grid-cols-2">
+                <details className="support-disclosure panel overflow-hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-xs font-semibold">Status das Pranchas <ChevronDown size={14} /></summary>
+                  <div className="border-t border-[var(--ds-border)] p-3"><FleetStatus embedded frotas={frotas} fretes={fretes} manutencoes={manutencoes} onPreOs={setPreOsFrota} onNoDriver={(numero) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, status: "Disponível", semMotorista: true } : item))} onMaintenance={(frota) => { setMaintenanceFrota(frota.numero); setMaintenanceOpen(true); }} onLocation={(numero, localDisponivel) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, localDisponivel } : item))} /></div>
+                </details>
+                <details className="support-disclosure panel overflow-hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-xs font-semibold">Programação WhatsApp <ChevronDown size={14} /></summary>
+                  <div className="border-t border-[var(--ds-border)] p-3"><Whatsapp embedded compact onOpen={() => setWhatsappOpen(true)} recordCount={fretes.filter((item) => item.status === "Pendente" || item.status === "Em Frete").length} flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} /></div>
+                </details>
               </section>
               <section className="panel overflow-hidden">
                 <div className="flex flex-col justify-between gap-2 px-4 py-3 sm:flex-row sm:items-center">
@@ -707,7 +702,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
               {historyExpanded && <HistoryTabs
                 tab={historyTab}
                 setTab={setHistoryTab}
-                fretes={filtered}
+                fretes={fretes}
                 onFrete={setSelected}
                 manutencoes={manutencoes}
                 filter={filter}
@@ -737,6 +732,19 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
           />
         </div>
       </Drawer>
+      <FleetOperationsDrawer
+        fleet={selectedFleetDetails}
+        fretes={fretes}
+        manutencoes={manutencoes}
+        close={() => setSelectedFleetDetails(null)}
+        edit={(frete) => { setSelectedFleetDetails(null); setEditFrete(frete); }}
+        cancel={(frete) => { setSelectedFleetDetails(null); setCancelFrete(frete); }}
+        finish={(frete) => {
+          setSelectedFleetDetails(null);
+          if (!advanceSequence(frete)) setCompleteFrete(frete);
+        }}
+        maintenance={(fleet) => { setSelectedFleetDetails(null); setMaintenanceFrota(fleet.numero); setMaintenanceOpen(true); }}
+      />
       <FreteDrawer
         frete={selected}
         close={() => setSelected(null)}
@@ -1067,9 +1075,7 @@ function Kanban({
   frotas,
   manutencoes,
   onFrete,
-  onEdit,
-  onCancel,
-  onFinishMaintenance,
+  onFleet,
   onNewFrete,
   onNewMaintenance,
 }: {
@@ -1077,72 +1083,82 @@ function Kanban({
   frotas: Frota[];
   manutencoes: Manutencao[];
   onFrete: (f: Frete) => void;
-  onEdit: (f: Frete) => void;
-  onCancel: (f: Frete) => void;
-  onFinishMaintenance: (m: Manutencao) => void;
+  onFleet: (f: Frota) => void;
   onNewFrete: () => void;
   onNewMaintenance: () => void;
 }) {
-  const [currentOperation, setCurrentOperation] = useState(operationKey());
-  useEffect(() => {
-    const id = window.setInterval(
-      () => setCurrentOperation(operationKey()),
-      60000,
-    );
-    return () => window.clearInterval(id);
-  }, []);
-  const active = fretes.filter(
-    (f) => f.status !== "Concluído" || f.operacao === currentOperation,
-  );
+  const pending = fretes.filter((item) => item.status === "Pendente");
+  const available = frotas.filter((item) => item.status === "Disponível" && !item.semMotorista);
+  const inFreight = frotas.filter((item) => item.status === "Em Frete");
+  const maintenance = frotas.filter((item) => item.status === "Manutenção");
+  const withoutDriver = frotas.filter((item) => item.semMotorista && item.status !== "Manutenção");
   return (
-    <section>
-      <div className="hidden">
-        <div>
-          <h2 className="font-semibold">Operação atual</h2>
-          <p className="mt-1 text-xs text-[#7a867f]">
-            07:00 às 06:59 do dia seguinte · Pendências e fretes permanecem
-            ativos
-          </p>
-        </div>
-        <span className="w-fit rounded-lg border border-[#e5e8e6] bg-white px-3 py-1.5 text-xs font-medium text-[#59625d]">
-          {operationLabel(currentOperation)}
-        </span>
-      </div>
-      <div className="kanban-board grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <FreteColumn
-          status="Pendente"
-          fretes={active.filter((f) => f.status === "Pendente")}
-          frotas={frotas}
-          onClick={onFrete}
-          onEdit={onEdit}
-          onCancel={onCancel}
-          onAdd={onNewFrete}
-        />
-        <FreteColumn
-          status="Em Frete"
-          fretes={active.filter((f) => f.status === "Em Frete")}
-          frotas={frotas}
-          onClick={onFrete}
-          onEdit={onEdit}
-          onCancel={onCancel}
-          onAdd={onNewFrete}
-        />
-        <FreteColumn
-          status="Concluído"
-          fretes={active.filter((f) => f.status === "Concluído")}
-          frotas={frotas}
-          onClick={onFrete}
-          onEdit={onEdit}
-          onCancel={onCancel}
-          onAdd={onNewFrete}
-        />
-        <MaintenanceColumn
-          items={manutencoes.filter((m) => m.status === "Em manutenção")}
-          finish={onFinishMaintenance}
-          onAdd={onNewMaintenance}
-        />
+    <section className="operational-workspace" aria-label="Workspace operacional">
+      <div className="workspace-board grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <WorkspaceColumn title="Pendentes" count={pending.length} tone="warning" onAdd={onNewFrete}>
+          {pending.map((frete) => <PendingWorkspaceItem key={frete.id} frete={frete} onClick={() => onFrete(frete)} />)}
+        </WorkspaceColumn>
+        <WorkspaceColumn title="Disponíveis" count={available.length} tone="success">
+          {available.map((fleet) => <FleetWorkspaceItem key={fleet.numero} fleet={fleet} tone="success" onClick={() => onFleet(fleet)} />)}
+        </WorkspaceColumn>
+        <WorkspaceColumn title="Em Frete" count={inFreight.length} tone="info">
+          {inFreight.map((fleet) => <FleetWorkspaceItem key={fleet.numero} fleet={fleet} tone="info" onClick={() => onFleet(fleet)} />)}
+        </WorkspaceColumn>
+        <WorkspaceColumn title="Manutenção" count={maintenance.length} tone="maintenance" onAdd={onNewMaintenance}>
+          {maintenance.map((fleet) => <FleetWorkspaceItem key={fleet.numero} fleet={fleet} tone="maintenance" onClick={() => onFleet(fleet)} />)}
+        </WorkspaceColumn>
+        <WorkspaceColumn title="Sem Motorista" count={withoutDriver.length} tone="neutral">
+          {withoutDriver.map((fleet) => <FleetWorkspaceItem key={fleet.numero} fleet={fleet} tone="neutral" onClick={() => onFleet(fleet)} />)}
+        </WorkspaceColumn>
       </div>
     </section>
+  );
+}
+
+type WorkspaceTone = "warning" | "success" | "info" | "maintenance" | "neutral";
+const workspaceTone = {
+  warning: { dot: "bg-amber-400", line: "border-l-amber-400", icon: "text-amber-600" },
+  success: { dot: "bg-emerald-500", line: "border-l-emerald-500", icon: "text-emerald-600" },
+  info: { dot: "bg-blue-500", line: "border-l-blue-500", icon: "text-blue-600" },
+  maintenance: { dot: "bg-orange-500", line: "border-l-orange-500", icon: "text-orange-600" },
+  neutral: { dot: "bg-slate-400", line: "border-l-slate-400", icon: "text-slate-500" },
+};
+
+function WorkspaceColumn({ title, count, tone, onAdd, children }: { title: string; count: number; tone: WorkspaceTone; onAdd?: () => void; children: React.ReactNode }) {
+  return (
+    <div className="workspace-column min-w-0">
+      <header className="flex h-10 items-center gap-2 px-2">
+        <i className={`h-2 w-2 rounded-full ${workspaceTone[tone].dot}`} />
+        <h2 className="text-xs font-semibold">{title}</h2>
+        <span className="rounded-md bg-[var(--ds-surface-hover)] px-1.5 py-0.5 text-[10px] tabular-nums text-[var(--ds-text-secondary)]">{count}</span>
+        <div className="ml-auto flex items-center gap-1">
+          {onAdd && <button onClick={onAdd} type="button" aria-label={`Adicionar em ${title}`} className="grid h-6 w-6 place-items-center rounded-md text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"><Plus size={13} /></button>}
+          <button type="button" aria-label={`Opções de ${title}`} className="grid h-6 w-6 place-items-center rounded-md text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"><MoreHorizontal size={14} /></button>
+        </div>
+      </header>
+      <div className="workspace-column-list space-y-1.5 overflow-y-auto p-1.5">{React.Children.count(children) ? children : <WorkspaceEmpty />}</div>
+    </div>
+  );
+}
+
+function WorkspaceEmpty() { return <div className="rounded-lg border border-dashed border-[var(--ds-border)] px-2 py-5 text-center text-[10px] text-[var(--ds-text-muted)]">Nenhum item</div>; }
+
+function PendingWorkspaceItem({ frete, onClick }: { frete: Frete; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="workspace-pending-item w-full rounded-lg border border-[var(--ds-border)] border-l-2 border-l-amber-400 bg-[var(--ds-surface)] px-2.5 py-2 text-left hover:border-l-amber-500 hover:bg-[var(--ds-surface-hover)]">
+      <strong className="block truncate text-[11px] font-semibold">{equipmentText(frete) || "Equipamento não informado"}</strong>
+      <span className="mt-1 block truncate text-[10px] text-[var(--ds-text-secondary)]">{frete.origem} → {frete.destino}</span>
+    </button>
+  );
+}
+
+function FleetWorkspaceItem({ fleet, tone, onClick }: { fleet: Frota; tone: WorkspaceTone; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={`workspace-fleet-item flex h-12 w-full items-center gap-2 rounded-lg border border-[var(--ds-border)] border-l-2 ${workspaceTone[tone].line} bg-[var(--ds-surface)] px-2.5 text-left hover:bg-[var(--ds-surface-hover)]`}>
+      <Truck size={14} className={`shrink-0 ${workspaceTone[tone].icon}`} />
+      <span className="truncate text-xs font-semibold tabular-nums">{fleet.numero} <span className="font-normal text-[var(--ds-text-muted)]">/</span> {fleet.prancha}</span>
+      <ChevronDown size={12} className="ml-auto -rotate-90 text-[var(--ds-text-muted)]" />
+    </button>
   );
 }
 function ColumnShell({
@@ -1801,6 +1817,56 @@ function DataTable({
   );
 }
 
+function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel, finish, maintenance }: {
+  fleet: Frota | null;
+  fretes: Frete[];
+  manutencoes: Manutencao[];
+  close: () => void;
+  edit: (frete: Frete) => void;
+  cancel: (frete: Frete) => void;
+  finish: (frete: Frete) => void;
+  maintenance: (fleet: Frota) => void;
+}) {
+  const related = fleet ? fretes.filter((frete) => frete.frota === fleet.numero || getEquipeTransporte(frete).some((team) => team.frota === fleet.numero)) : [];
+  const active = related.find((frete) => frete.status === "Em Frete");
+  const last = active || related[0];
+  const activeMaintenance = fleet ? manutencoes.find((item) => item.frota === fleet.numero && item.status === "Em manutenção") : undefined;
+  const driver = active && fleet ? getEquipeTransporte(active).find((team) => team.frota === fleet.numero)?.motorista || active.motorista : undefined;
+  return (
+    <Drawer open={Boolean(fleet)} close={close} title={fleet ? `Frota ${fleet.numero}` : "Detalhes da Prancha"}>
+      {fleet && <div className="p-5">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] pb-4">
+          <div><p className="ds-caption uppercase tracking-[.1em]">Prancha</p><p className="mt-1 text-xl font-semibold tabular-nums">{fleet.prancha}</p></div>
+          <span className={`ds-badge ${fleet.status === "Disponível" ? "ds-badge-success" : fleet.status === "Em Frete" ? "ds-badge-info" : "ds-badge-warning"}`}>{fleet.status}</span>
+        </div>
+        <section className="py-4">
+          <h3 className="ds-h3">Operação atual</h3>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div><dt className="ds-caption">Origem</dt><dd className="mt-1 text-sm font-medium">{last?.origem || "—"}</dd></div>
+            <div><dt className="ds-caption">Destino</dt><dd className="mt-1 text-sm font-medium">{last?.destino || "—"}</dd></div>
+            <div><dt className="ds-caption">Motorista</dt><dd className="mt-1 text-sm font-medium">{driver || "Sem motorista"}</dd></div>
+            <div><dt className="ds-caption">Equipamento</dt><dd className="mt-1 text-sm font-medium">{last ? equipmentText(last) || "—" : "—"}</dd></div>
+            <div><dt className="ds-caption">Horário</dt><dd className="mt-1 text-sm font-medium">{last?.horario || "—"}</dd></div>
+            <div><dt className="ds-caption">Localização</dt><dd className="mt-1 text-sm font-medium">{fleet.localDisponivel || activeMaintenance?.localizacao || "—"}</dd></div>
+          </dl>
+        </section>
+        {last && <section className="border-t border-[var(--ds-border)] py-4">
+          <h3 className="ds-h3">Responsáveis e equipe</h3>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div><dt className="ds-caption">Solicitante</dt><dd className="mt-1 text-sm">{last.solicitante}</dd></div>
+            <div><dt className="ds-caption">Setor</dt><dd className="mt-1 text-sm">{last.setor}</dd></div>
+            <div className="sm:col-span-2"><dt className="ds-caption">Equipe</dt><dd className="mt-1 text-sm">{getEquipeTransporte(last).map((team) => `${team.frota} · ${team.motorista}`).join(" | ") || "Não vinculada"}</dd></div>
+          </dl>
+        </section>}
+        <div className="sticky bottom-0 mt-3 flex flex-wrap gap-2 border-t border-[var(--ds-border)] bg-[var(--ds-surface)] pt-4">
+          {active && <><Button variant="secondary" onClick={() => edit(active)}><Pencil size={14} /> Editar</Button><Button variant="danger" onClick={() => cancel(active)}><X size={14} /> Cancelar</Button><Button variant="primary" onClick={() => finish(active)}>Finalizar</Button></>}
+          {fleet.status !== "Manutenção" && <Button variant="secondary" onClick={() => maintenance(fleet)}><Wrench size={14} /> Manutenção</Button>}
+        </div>
+      </div>}
+    </Drawer>
+  );
+}
+
 function Whatsapp({
   flow,
   flowRef,
@@ -1812,6 +1878,7 @@ function Whatsapp({
   compact = false,
   onOpen,
   recordCount = 0,
+  embedded = false,
 }: {
   flow: string;
   flowRef: React.RefObject<HTMLDivElement | null>;
@@ -1823,6 +1890,7 @@ function Whatsapp({
   compact?: boolean;
   onOpen?: () => void;
   recordCount?: number;
+  embedded?: boolean;
 }) {
   const [lastGenerated, setLastGenerated] = useState<string | null>(null);
   const handleGenerate = () => {
@@ -1839,7 +1907,7 @@ function Whatsapp({
   };
   if (compact) {
     return (
-      <section className="panel p-4">
+      <section className={embedded ? "p-1" : "panel p-4"}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
@@ -1933,6 +2001,7 @@ function FleetStatus({
   onLocation,
   onNoDriver,
   onMaintenance,
+  embedded = false,
 }: {
   frotas: Frota[];
   fretes: Frete[];
@@ -1942,6 +2011,7 @@ function FleetStatus({
   onLocation: (numero: string, location: string) => void;
   onNoDriver: (numero: string) => void;
   onMaintenance: (f: Frota) => void;
+  embedded?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [selectedFleet, setSelectedFleet] = useState<Frota | null>(null);
@@ -1996,7 +2066,7 @@ function FleetStatus({
     : [];
   return (
     <>
-    <section className="panel p-4">
+    <section className={embedded ? "p-1" : "panel p-4"}>
       <div className="mb-3 flex items-center gap-2.5">
         <CircleGauge size={16} className="text-[#69726d]" />
         <div>

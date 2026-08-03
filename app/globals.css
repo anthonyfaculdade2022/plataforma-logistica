@@ -184,6 +184,54 @@ textarea {
 .metric-card {
   min-height: 104px;
 }
+.fleet-metric {
+  box-shadow: none !important;
+}
+.operational-workspace {
+  min-width: 0;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface-subtle);
+  padding: 8px;
+}
+.workspace-board {
+  min-width: 0;
+}
+.workspace-column {
+  min-height: 440px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius);
+  background: color-mix(in srgb, var(--ds-surface) 52%, transparent);
+}
+.workspace-column-list {
+  max-height: min(62vh, 650px);
+}
+.workspace-fleet-item,
+.workspace-pending-item {
+  box-shadow: none;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+.workspace-fleet-item:hover,
+.workspace-pending-item:hover {
+  transform: translateY(-1px);
+}
+.support-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.support-disclosure[open] > summary svg {
+  transform: rotate(180deg);
+}
+.support-disclosure > summary svg {
+  transition: transform 150ms ease;
+}
+@media (max-width: 767px) {
+  .workspace-column {
+    min-height: auto;
+  }
+  .workspace-column-list {
+    max-height: 360px;
+  }
+}
 .kanban-column {
   background: var(--ds-surface-subtle) !important;
   border: 1px solid var(--ds-border) !important;
