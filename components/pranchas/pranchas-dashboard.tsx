@@ -607,7 +607,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
   }
   return (
     <div className="min-h-screen bg-[#f5f7f5] lg:flex">
-      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} onEquipment={() => setEquipmentOpen(true)} onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }} onFleet={() => { setFleetViewFilter(null); setFleetOpen(true); }} onWhatsapp={() => setWhatsappOpen(true)} />
+      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} />
       <main className="min-w-0 flex-1 lg:ml-[238px]">
         <MobileHeader open={() => setMobile(true)} />
         <div className="mx-auto max-w-[1920px] p-4 sm:p-6 lg:px-7 lg:py-6">
@@ -829,18 +829,10 @@ function Sidebar({
   mobile,
   close,
   user,
-  onEquipment,
-  onMaintenance,
-  onFleet,
-  onWhatsapp,
 }: {
   mobile: boolean;
   close: () => void;
   user: AuthUser;
-  onEquipment: () => void;
-  onMaintenance: () => void;
-  onFleet: () => void;
-  onWhatsapp: () => void;
 }) {
   return (
     <>
@@ -861,18 +853,6 @@ function Sidebar({
             <Truck size={18} />
             Pranchas
             <span className="ml-auto h-2 w-2 rounded-full bg-[#d6f269]" />
-          </button>
-          <button onClick={onEquipment} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
-            <Tractor size={18} /> Equipamentos
-          </button>
-          <button onClick={onMaintenance} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
-            <Wrench size={18} /> Manutenção
-          </button>
-          <button onClick={onFleet} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
-            <CircleGauge size={18} /> Status das Pranchas
-          </button>
-          <button onClick={onWhatsapp} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
-            <MessageCircle size={18} /> Programação
           </button>
         </nav>
         <div className="mt-auto space-y-2.5">
