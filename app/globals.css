@@ -90,6 +90,17 @@ textarea {
   border-color: #bcc8c0;
   background: rgba(247, 249, 247, 0.7);
 }
+.filter-bar {
+  scrollbar-width: thin;
+}
+@media (min-width: 1024px) {
+  .filter-bar {
+    overflow-x: auto;
+  }
+  .filter-bar .search-control {
+    min-width: 240px;
+  }
+}
 .label {
   display: block;
   margin-bottom: 8px;
