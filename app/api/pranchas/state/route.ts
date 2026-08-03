@@ -28,8 +28,30 @@ const emptyState = (): PranchasState => ({
 const supabaseConfigured = () =>
   Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY),
   );
+
+function persistenceErrorMessage(error: unknown) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    return "Configuração incompleta: NEXT_PUBLIC_SUPABASE_URL não encontrada.";
+  if (!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY))
+    return "Configuração incompleta: chave secreta do Supabase não encontrada.";
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code?: unknown }).code || "")
+      : "";
+  if (code === "PGRST205" || code === "42P01")
+    return "A tabela plataforma_estado não foi encontrada no Supabase.";
+  const status =
+    typeof error === "object" && error && "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : 0;
+  if (status === 401 || status === 403)
+    return "A chave secreta do Supabase foi recusada. Confira SUPABASE_SERVICE_ROLE_KEY.";
+  return code
+    ? `Falha ao acessar o Supabase (código ${code}).`
+    : "Não foi possível conectar ao Supabase. Confira a URL e a chave secreta.";
+}
 
 async function loadState() {
   if (!supabaseConfigured()) {
@@ -75,7 +97,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Failed to load pranchas state", error);
     return NextResponse.json(
-      { error: "A base persistente não está disponível." },
+      { error: persistenceErrorMessage(error) },
       { status: 503 },
     );
   }
@@ -92,6 +114,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ saved: true, updatedAt: new Date().toISOString() });
   } catch (error) {
     console.error("Failed to save pranchas state", error);
-    return NextResponse.json({ error: "Não foi possível salvar os dados." }, { status: 503 });
+    return NextResponse.json({ error: persistenceErrorMessage(error) }, { status: 503 });
   }
 }
