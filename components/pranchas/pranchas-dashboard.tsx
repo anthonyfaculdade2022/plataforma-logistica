@@ -2228,9 +2228,11 @@ function Modal({
           <div className="flex justify-between border-b p-5">
             <div>
               <Dialog.Title className="font-semibold">{title}</Dialog.Title>
-              <Dialog.Description className="mt-1 text-xs text-[#78847d]">
-                {description}
-              </Dialog.Description>
+              {description && (
+                <Dialog.Description className="mt-1 text-xs text-[#78847d]">
+                  {description}
+                </Dialog.Description>
+              )}
             </div>
             <Dialog.Close>
               <X size={18} />
@@ -3246,43 +3248,18 @@ function StartModal({
       open
       close={close}
       title="Iniciar Deslocamento"
-      description="Vincule uma ou mais pranchas com seus motoristas"
+      description=""
       wide
     >
       <form onSubmit={submitTeam} className="flex max-h-[72vh] flex-col">
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
-          <div>
-            <h3 className="text-sm font-semibold">Montagem da equipe</h3>
-            <p className="mt-1 text-xs text-[#77827b]">
-              Selecione a frota e o motorista de cada conjunto.
-            </p>
-          </div>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6">
           {equipe.map((member, index) => (
             <div
               key={index}
-              className="rounded-xl border border-[#e1e6e3] bg-[#fafbfa] p-3.5 shadow-[0_1px_2px_rgba(18,24,21,.03)]"
+              className="relative grid gap-4 sm:grid-cols-2"
             >
-              <div className="mb-2.5 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[.08em] text-[#4f5953]">
-                  Equipe {index + 1}
-                </p>
-                {equipe.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEquipe((items) =>
-                        items.filter((_, itemIndex) => itemIndex !== index),
-                      )
-                    }
-                    className="rounded-md px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Remover
-                  </button>
-                )}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label>
-                  <span className="label inline-flex items-center gap-1.5"><Truck size={13} /> Frota</span>
+                <label className="min-w-0">
+                  <span className="label">Frota</span>
                   <FleetCombobox
                     frotas={frotas.filter(
                       (item) =>
@@ -3296,8 +3273,8 @@ function StartModal({
                     onChange={(value) => updateMember(index, "frota", value)}
                   />
                 </label>
-                <label>
-                  <span className="label inline-flex items-center gap-1.5"><UserRound size={13} /> Motorista</span>
+                <label className="min-w-0">
+                  <span className="label">Motorista</span>
                   <DriverCombobox
                     motoristas={motoristas.filter(
                       (driver) =>
@@ -3310,7 +3287,19 @@ function StartModal({
                     onChange={(value) => updateMember(index, "motorista", value)}
                   />
                 </label>
-              </div>
+                {equipe.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEquipe((items) =>
+                        items.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                    className="absolute -right-1 -top-2 rounded-md px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Remover
+                  </button>
+                )}
             </div>
           ))}
           <button
@@ -3318,21 +3307,13 @@ function StartModal({
             onClick={() =>
               setEquipe((items) => [...items, { frota: "", motorista: "" }])
             }
-            className="mx-auto flex w-full max-w-sm items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#cfd7d2] bg-white px-4 py-2.5 text-xs font-semibold text-[#59645d] transition-colors hover:border-[#aebbb3] hover:bg-[#f6f8f6]"
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#526158] transition-colors hover:text-[#174e37]"
           >
-            <Plus size={14} /> Adicionar outra prancha
+            <Plus size={14} /> Adicionar outra equipe
           </button>
           {teamError && <p className="text-center text-xs text-red-600">{teamError}</p>}
         </div>
-        <footer className="shrink-0 border-t border-[#e8ece9] bg-white px-5 py-4">
-          <div className="mb-3 flex items-center justify-between rounded-lg bg-[#f7f9f7] px-3 py-2 text-xs">
-            <span className="font-semibold text-[#4c5650]">Resumo</span>
-            <span className="text-[#727d76]">
-              Pranchas: <strong className="text-[#303732]">{equipe.filter((item) => item.frota).length}</strong>
-              <span className="mx-2 text-[#c4ccc7]">•</span>
-              Motoristas: <strong className="text-[#303732]">{equipe.filter((item) => item.motorista).length}</strong>
-            </span>
-          </div>
+        <footer className="shrink-0 px-5 pb-5 pt-1">
           <div className="flex gap-3">
           <button
             type="button"
