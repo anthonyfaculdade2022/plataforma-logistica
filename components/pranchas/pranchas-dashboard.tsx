@@ -642,7 +642,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
       <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} />
       <main className="min-w-0 flex-1 lg:ml-[238px]">
         <MobileHeader open={() => setMobile(true)} />
-        <div className="mx-auto max-w-[1920px] p-4 sm:p-6 lg:px-7 lg:py-6">
+        <div className="mx-auto max-w-[1920px] p-4 sm:p-5 lg:px-6 lg:py-5">
           {persistenceError && (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {persistenceError} As alterações permanecerão na tela, mas precisam ser salvas antes de sair.
@@ -659,7 +659,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             onWhatsapp={() => setWhatsappOpen(true)}
           />
           <Indicators frotas={frotas} onSelect={(value) => { setFleetViewFilter(value); setFleetOpen(true); }} />
-          <div className="mt-6 grid gap-5">
+          <div className="mt-4 grid gap-4">
             <div className="min-w-0 space-y-4">
               <Kanban
                 fretes={filtered}
@@ -671,10 +671,10 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 onFinishMaintenance={finishMaintenance}
               />
               <section className="panel overflow-hidden">
-                <div className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col justify-between gap-2 px-4 py-3 sm:flex-row sm:items-center">
                   <div>
                     <h2 className="text-sm font-semibold">Últimas movimentações</h2>
-                    <p className="mt-1 text-xs text-[#7a867f]">O histórico completo fica disponível quando necessário.</p>
+                    <p className="mt-0.5 text-[11px] text-[#7a867f]">Consulte o histórico completo quando necessário.</p>
                   </div>
                   <button className="workspace-action" onClick={() => setHistoryExpanded((value) => !value)}>
                     {historyExpanded ? "Recolher histórico" : "Ver histórico completo"}
@@ -910,7 +910,7 @@ function Header({
   }).format(new Date());
   return (
     <>
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="header-copy">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[.15em] text-[#688071]">
             Operação de transporte
@@ -925,35 +925,35 @@ function Header({
         <div className="header-actions flex flex-wrap gap-2">
           <button
             onClick={onFleet}
-            className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
+            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
           >
             <CircleGauge size={16} />
             Status das Pranchas
           </button>
           <button
             onClick={onWhatsapp}
-            className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
+            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
           >
             <MessageCircle size={16} />
             Programação
           </button>
           <button
             onClick={onMaintenance}
-            className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
+            className="flex h-9 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3 text-xs font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
           >
             <Wrench size={16} />
             Manutenção
           </button>
           <button
             onClick={onNew}
-            className="primary-action flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+            className="primary-action flex h-9 items-center gap-2 rounded-xl px-3.5 text-xs font-semibold text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md"
           >
             <Plus size={16} />
             Novo Frete
           </button>
         </div>
       </div>
-      <div className="operational-strip mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border border-[#e5e9e6] bg-white px-3 py-2 text-[11px] text-[#68736c] shadow-[0_1px_2px_rgba(18,24,21,.02)]">
+      <div className="operational-strip mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-[#e5e9e6] bg-white px-3 py-1.5 text-[10px] text-[#68736c] shadow-[0_1px_2px_rgba(18,24,21,.02)]">
         <span className="font-semibold text-[#343a36]">
           {operationLabel(operationKey())}
         </span>
@@ -964,7 +964,7 @@ function Header({
         </span>
         <span className="sm:ml-auto">Última atualização: {lastUpdated}</span>
       </div>
-      <div className="panel mt-3 flex flex-col gap-2.5 p-2.5 md:flex-row md:items-center">
+      <div className="panel mt-2.5 flex flex-col gap-2 p-2 md:flex-row md:items-center">
         <div className="flex items-center gap-2 border-b px-2 py-1.5 text-sm font-medium md:border-b-0 md:border-r md:py-0 md:pr-4">
           <CalendarDays size={17} />
           <span>{todayLabel}</span>
@@ -1046,12 +1046,12 @@ function Indicators({
     },
   ];
   return (
-    <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="mt-3.5 grid grid-cols-2 gap-3 lg:grid-cols-4">
       {[items[0], items[2], items[1], items[3]].map((x) => (
         <button
           type="button"
           onClick={() => onSelect(x.filter)}
-          className="panel fleet-metric flex min-h-[86px] items-center justify-start gap-3 p-3.5 text-left sm:px-4"
+          className="panel fleet-metric flex min-h-[72px] items-center justify-start gap-3 p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#5f7669]/30 sm:px-4"
           key={x.label}
         >
           <div
@@ -1114,7 +1114,7 @@ function Kanban({
           {operationLabel(currentOperation)}
         </span>
       </div>
-      <div className="grid items-start gap-5 md:grid-cols-2 2xl:grid-cols-4">
+      <div className="kanban-board grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-4">
         <FreteColumn
           status="Pendente"
           fretes={active.filter((f) => f.status === "Pendente")}
@@ -1160,7 +1160,7 @@ function ColumnShell({
 }) {
   return (
     <div className="min-w-0 self-start">
-      <div className="mb-3 flex min-h-9 items-center gap-2 border-b border-[#e7ebe8] px-1 pb-2.5">
+      <div className="mb-2 flex min-h-8 items-center gap-2 border-b border-[#e7ebe8] px-1 pb-2">
         <span className={`h-2 w-2 rounded-full ${dot}`} />
         <h3 className="text-sm font-semibold tracking-[-.01em] text-[#2d332f]">
           {title}
@@ -1214,7 +1214,7 @@ function FreteColumn({
           <button
             key={f.id}
             onClick={() => onClick(f)}
-            className={`group relative w-full overflow-hidden rounded-xl border border-[#e8ece9] bg-white p-3 text-left shadow-[0_1px_2px_rgba(18,24,21,.022)] before:absolute before:inset-y-0 before:left-0 before:w-[3px] ${line} transition-[transform,border-color,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#d7ddd9] hover:shadow-[0_8px_20px_rgba(18,24,21,.06)]`}
+            className={`freight-card group relative w-full overflow-hidden rounded-xl border border-[#e8ece9] bg-white p-3 text-left shadow-[0_1px_2px_rgba(18,24,21,.022)] before:absolute before:inset-y-0 before:left-0 before:w-[3px] ${line} transition-[transform,border-color,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#d7ddd9] hover:shadow-[0_8px_20px_rgba(18,24,21,.06)]`}
           >
             <div className="flex min-w-0 items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold leading-5 text-[#262b28]">
@@ -1241,7 +1241,7 @@ function FreteColumn({
             )}
             <div className="mt-2 space-y-1.5 text-xs text-[#68716c]">
               {f.equipamentoTipo && (
-                <span className="flex min-h-4 items-center gap-1.5 text-[12px] font-semibold text-[#3b433e]">
+                <span className="freight-equipment flex min-h-4 items-center gap-1.5 text-[12px] font-semibold text-[#3b433e]">
                   <Tractor size={14} className="shrink-0 text-[#67716b]" />
                   {f.equipamentoTipo} {f.equipamentoCodigo}
                 </span>
@@ -1341,7 +1341,7 @@ function FreteColumn({
         );
       })}
       {!fretes.length && (
-        <div className="rounded-xl border border-dashed border-[#e5e8e6] p-4 text-center text-xs text-[#969e99]">
+        <div className="rounded-xl border border-dashed border-[#e5e8e6] px-3 py-2.5 text-center text-[11px] text-[#969e99]">
           Sem fretes nesta etapa
         </div>
       )}
@@ -1360,7 +1360,7 @@ function MaintenanceColumn({
       {items.map((m) => (
         <div
           key={m.id}
-          className="flex min-h-[196px] flex-col rounded-xl border border-[#f0e8dd] bg-[#fffcf8] p-3 shadow-[0_1px_2px_rgba(45,34,20,.025)] transition-[transform,border-color,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#e8dac8] hover:shadow-[0_8px_20px_rgba(45,34,20,.055)]"
+          className="flex flex-col rounded-xl border border-[#f0e8dd] bg-[#fffcf8] p-3 shadow-[0_1px_2px_rgba(45,34,20,.025)] transition-[transform,border-color,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#e8dac8] hover:shadow-[0_8px_20px_rgba(45,34,20,.055)]"
         >
           <div className="flex items-center justify-between gap-2">
             <p className="flex min-h-5 items-center gap-1.5 font-semibold">
@@ -1433,7 +1433,7 @@ function MaintenanceColumn({
         </div>
       ))}
       {!items.length && (
-        <div className="rounded-xl border border-dashed border-[#e5e8e6] p-4 text-center text-xs text-[#969e99]">
+        <div className="rounded-xl border border-dashed border-[#e5e8e6] px-3 py-2.5 text-center text-[11px] text-[#969e99]">
           Nenhuma manutenção no momento
         </div>
       )}

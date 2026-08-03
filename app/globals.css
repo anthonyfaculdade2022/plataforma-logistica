@@ -314,9 +314,6 @@ table td {
 }
 
 /* Dashboard operacional: o Kanban ocupa o foco e os recursos auxiliares abrem em painéis. */
-.header-actions button:first-child {
-  display: none;
-}
 .header-copy > p {
   display: none;
 }
@@ -354,13 +351,16 @@ table td {
   box-shadow: 0 8px 22px rgba(18, 24, 21, 0.055);
 }
 /* Indicadores compactos, com leitura imediata. */
-.mt-5.grid.grid-cols-2 > .panel {
+.mt-3\.5.grid.grid-cols-2 > .panel {
   min-height: 70px;
   justify-content: flex-start;
   padding: 12px 16px;
 }
-.mt-5.grid.grid-cols-2 > .panel p:first-child {
+.mt-3\.5.grid.grid-cols-2 > .panel p:first-child {
   font-size: 25px;
+}
+.freight-equipment {
+  color: #465149;
 }
 /* O histórico incorporado não duplica bordas. */
 .panel > section.panel {
@@ -386,6 +386,26 @@ table td {
   }
   .operational-strip {
     gap: 8px 14px;
+  }
+  .header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .header-actions button {
+    justify-content: center;
+  }
+  .kanban-board {
+    display: flex !important;
+    margin-inline: -4px;
+    overflow-x: auto;
+    padding: 2px 4px 10px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+  .kanban-board > * {
+    min-width: min(86vw, 360px);
+    scroll-snap-align: start;
   }
 }
 
@@ -586,6 +606,9 @@ html.dark table td {
 }
 html.dark table td {
   color: #d9dde1;
+}
+html.dark .freight-equipment {
+  color: #d9e1dc !important;
 }
 html.dark ::-webkit-scrollbar-thumb {
   background: #3a424b;
