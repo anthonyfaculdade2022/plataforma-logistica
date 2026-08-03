@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Children, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1136,7 +1136,7 @@ function WorkspaceColumn({ title, count, tone, onAdd, children }: { title: strin
           <button type="button" aria-label={`Opções de ${title}`} className="grid h-6 w-6 place-items-center rounded-md text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"><MoreHorizontal size={14} /></button>
         </div>
       </header>
-      <div className="workspace-column-list space-y-1.5 overflow-y-auto p-1.5">{React.Children.count(children) ? children : <WorkspaceEmpty />}</div>
+      <div className="workspace-column-list space-y-1.5 overflow-y-auto p-1.5">{Children.count(children) ? children : <WorkspaceEmpty />}</div>
     </div>
   );
 }
