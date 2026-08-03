@@ -44,3 +44,7 @@ next-env.d.ts
 !/build/sites-vite-plugin.ts
 *.tgz
 *.tsbuildinfo
+
+# local persistent application database
+/data/plataforma-estado.json
+/data/*.tmp

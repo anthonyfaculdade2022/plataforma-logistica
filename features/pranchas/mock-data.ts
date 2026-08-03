@@ -1,10 +1,96 @@
-import { Equipamento,Frete,Frota,Manutencao } from "./types";
+import { Equipamento, Frete, Frota, Manutencao } from "./types";
 import { FROTAS_FIXAS } from "./frotas-config";
-export const initialFretes:Frete[]=[
- {id:"FR-1052",operacao:"20260801",data:"01/08/2026",horario:"14:30",solicitante:"Marta Reis",responsavel:"Ana Ribeiro",setor:"Oficina",origem:"Frente 83",destino:"Oficina Aralco",prioridade:"Alta",status:"Pendente",observacao:"Aguardar liberação do líder da frente.",equipamentoTipo:"Colhedora 61065"},
- {id:"FR-1050",operacao:"20260801",data:"01/08/2026",horario:"09:40",frota:"25075",motorista:"Rafael Costa",solicitante:"Carlos Lima",responsavel:"Bruno Alves",setor:"Operações",origem:"Frente 87",destino:"Generalco",prioridade:"Alta",status:"Em Frete",observacao:"Transportar utilizando prancha longa.",inicioDeslocamento:"01/08/2026 09:47",equipamentoTipo:"Pá Carregadeira 41002"},
- {id:"FR-1045",operacao:"20260731",data:"31/07/2026",horario:"16:10",frota:"25079",motorista:"Paulo Gomes",solicitante:"Paula Nunes",responsavel:"Ana Ribeiro",setor:"Operações",origem:"Generalco",destino:"Aralco",prioridade:"Média",status:"Concluído",observacao:"Entrega concluída sem ocorrências.",inicioDeslocamento:"31/07/2026 16:14",conclusao:"31/07/2026 18:42",equipamentoTipo:"Trator 31077"}
+export const initialFretes: Frete[] = [
+  {
+    id: "FR-1052",
+    operacao: "20260801",
+    data: "01/08/2026",
+    horario: "14:30",
+    solicitante: "Marta Reis",
+    responsavel: "Ana Ribeiro",
+    setor: "Oficina",
+    origem: "Frente 83",
+    destino: "Oficina Aralco",
+    prioridade: "Alta",
+    status: "Pendente",
+    observacao: "Aguardar liberação do líder da frente.",
+    equipamentoTipo: "Colhedora 61065",
+  },
+  {
+    id: "FR-1050",
+    operacao: "20260801",
+    data: "01/08/2026",
+    horario: "09:40",
+    frota: "25075",
+    motorista: "Rafael Costa",
+    equipeTransporte: [{ frota: "25075", motorista: "Rafael Costa" }],
+    solicitante: "Carlos Lima",
+    responsavel: "Bruno Alves",
+    setor: "Operações",
+    origem: "Frente 87",
+    destino: "Generalco",
+    prioridade: "Alta",
+    status: "Em Frete",
+    observacao: "Transportar utilizando prancha longa.",
+    inicioDeslocamento: "01/08/2026 09:47",
+    equipamentoTipo: "Pá Carregadeira 41002",
+  },
+  {
+    id: "FR-1045",
+    operacao: "20260731",
+    data: "31/07/2026",
+    horario: "16:10",
+    frota: "25079",
+    motorista: "Paulo Gomes",
+    equipeTransporte: [{ frota: "25079", motorista: "Paulo Gomes" }],
+    solicitante: "Paula Nunes",
+    responsavel: "Ana Ribeiro",
+    setor: "Operações",
+    origem: "Generalco",
+    destino: "Aralco",
+    prioridade: "Média",
+    status: "Concluído",
+    observacao: "Entrega concluída sem ocorrências.",
+    inicioDeslocamento: "31/07/2026 16:14",
+    conclusao: "31/07/2026 18:42",
+    equipamentoTipo: "Trator 31077",
+  },
 ];
-export const initialFrotas:Frota[]=FROTAS_FIXAS.map(f=>({...f,status:f.numero==="25075"?"Em Frete":f.numero==="25077"?"Manutenção":"Disponível",localDisponivel:f.numero==="25074"?"Generalco":"Aralco"}));
-export const initialManutencoes:Manutencao[]=[{id:"MN-201",frota:"25077",numeroOs:"123456",localizacao:"Frente 97",entradaData:"01/08/2026",entradaHora:"08:20",tipo:"Corretiva",servico:"Troca de mangueira hidráulica",observacoes:"Vazamento identificado na inspeção.",previsao:true,previsaoData:"02/08/2026",previsaoHora:"14:00",responsavel:"Ana Ribeiro",status:"Em manutenção"}];
-export const initialEquipamentos:Equipamento[]=[{id:"EQ-01",codigo:"41002",tipo:"Pá Carregadeira",descricao:"Pá carregadeira frontal"},{id:"EQ-02",codigo:"61065",tipo:"Colhedora"},{id:"EQ-03",codigo:"31077",tipo:"Trator"}];
+export const initialFrotas: Frota[] = FROTAS_FIXAS.map((f) => ({
+  ...f,
+  status:
+    f.numero === "25075"
+      ? "Em Frete"
+      : f.numero === "25077"
+        ? "Manutenção"
+        : "Disponível",
+  localDisponivel: f.numero === "25074" ? "Generalco" : "Aralco",
+}));
+export const initialManutencoes: Manutencao[] = [
+  {
+    id: "MN-201",
+    frota: "25077",
+    numeroOs: "123456",
+    localizacao: "Frente 97",
+    entradaData: "01/08/2026",
+    entradaHora: "08:20",
+    tipo: "Corretiva",
+    servico: "Troca de mangueira hidráulica",
+    observacoes: "Vazamento identificado na inspeção.",
+    previsao: true,
+    previsaoData: "02/08/2026",
+    previsaoHora: "14:00",
+    responsavel: "Ana Ribeiro",
+    status: "Em manutenção",
+  },
+];
+export const initialEquipamentos: Equipamento[] = [
+  {
+    id: "EQ-01",
+    codigo: "41002",
+    tipo: "Pá Carregadeira",
+    descricao: "Pá carregadeira frontal",
+  },
+  { id: "EQ-02", codigo: "61065", tipo: "Colhedora" },
+  { id: "EQ-03", codigo: "31077", tipo: "Trator" },
+];
