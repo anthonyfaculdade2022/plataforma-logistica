@@ -230,6 +230,9 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
     [flow, setFlow] = useState(""),
     [copied, setCopied] = useState(false),
     [mobile, setMobile] = useState(false),
+    [whatsappOpen, setWhatsappOpen] = useState(false),
+    [fleetOpen, setFleetOpen] = useState(false),
+    [historyExpanded, setHistoryExpanded] = useState(false),
     [historyTab, setHistoryTab] = useState<"fretes" | "manutencao">("fretes");
   const flowRef = useRef<HTMLDivElement>(null);
   const filtered = useMemo(
@@ -603,7 +606,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
   }
   return (
     <div className="min-h-screen bg-[#f5f7f5] lg:flex">
-      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} />
+      <Sidebar mobile={mobile} close={() => setMobile(false)} user={user} onEquipment={() => setEquipmentOpen(true)} onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }} />
       <main className="min-w-0 flex-1 lg:ml-[238px]">
         <MobileHeader open={() => setMobile(true)} />
         <div className="mx-auto max-w-[1920px] p-4 sm:p-6 lg:px-7 lg:py-6">
@@ -619,14 +622,15 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
             setFilter={setFilter}
             onNew={() => setNewOpen(true)}
             onEquipment={() => setEquipmentOpen(true)}
-            onMaintenance={() => {
-              setMaintenanceFrota(null);
-              setMaintenanceOpen(true);
-            }}
+            onMaintenance={() => { setMaintenanceFrota(null); setMaintenanceOpen(true); }}
           />
           <Indicators fretes={fretes} manutencoes={manutencoes} />
-          <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_276px]">
+          <div className="mt-6 grid gap-5">
             <div className="min-w-0 space-y-6">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button onClick={() => setFleetOpen(true)} className="workspace-action"><Truck size={15} /> Pranchas</button>
+                <button onClick={() => setWhatsappOpen(true)} className="workspace-action"><MessageCircle size={15} /> Gerar Programação</button>
+              </div>
               <Kanban
                 fretes={filtered}
                 frotas={frotas}
@@ -636,7 +640,17 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 onCancel={setCancelFrete}
                 onFinishMaintenance={finishMaintenance}
               />
-              <HistoryTabs
+              <section className="panel overflow-hidden">
+                <div className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                  <div>
+                    <h2 className="text-sm font-semibold">Últimas movimentações</h2>
+                    <p className="mt-1 text-xs text-[#7a867f]">O histórico completo fica disponível quando necessário.</p>
+                  </div>
+                  <button className="workspace-action" onClick={() => setHistoryExpanded((value) => !value)}>
+                    {historyExpanded ? "Recolher histórico" : "Ver histórico completo"}
+                  </button>
+                </div>
+              {historyExpanded && <HistoryTabs
                 tab={historyTab}
                 setTab={setHistoryTab}
                 fretes={filtered}
@@ -644,9 +658,10 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
                 manutencoes={manutencoes}
                 filter={filter}
                 setFilter={setFilter}
-              />
+              />}
+              </section>
             </div>
-            <aside className="side-panel space-y-5">
+            <aside className="hidden">
               <Whatsapp
                 flow={flow}
                 flowRef={flowRef}
@@ -690,6 +705,22 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
           </div>
         </div>
       </main>
+      <Drawer open={whatsappOpen} close={() => setWhatsappOpen(false)} title="Programação WhatsApp">
+        <div className="p-5">
+          <Whatsapp flow={flow} flowRef={flowRef} generate={generate} copy={copy} download={download} send={send} copied={copied} />
+        </div>
+      </Drawer>
+      <Drawer open={fleetOpen} close={() => setFleetOpen(false)} title="Status das Pranchas">
+        <div className="p-5">
+          <FleetStatus
+            frotas={frotas}
+            onPreOs={setPreOsFrota}
+            onNoDriver={(numero) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, status: "Disponível", semMotorista: true } : item))}
+            onMaintenance={(frota) => { setFleetOpen(false); setMaintenanceFrota(frota.numero); setMaintenanceOpen(true); }}
+            onLocation={(numero, localDisponivel) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, localDisponivel } : item))}
+          />
+        </div>
+      </Drawer>
       <FreteDrawer
         frete={selected}
         close={() => setSelected(null)}
@@ -792,10 +823,14 @@ function Sidebar({
   mobile,
   close,
   user,
+  onEquipment,
+  onMaintenance,
 }: {
   mobile: boolean;
   close: () => void;
   user: AuthUser;
+  onEquipment: () => void;
+  onMaintenance: () => void;
 }) {
   return (
     <>
@@ -816,6 +851,12 @@ function Sidebar({
             <Truck size={18} />
             Pranchas
             <span className="ml-auto h-2 w-2 rounded-full bg-[#d6f269]" />
+          </button>
+          <button onClick={onEquipment} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
+            <Tractor size={18} /> Equipamentos
+          </button>
+          <button onClick={onMaintenance} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white">
+            <Wrench size={18} /> Manutenção
           </button>
         </nav>
         <div className="mt-auto space-y-2.5">
@@ -880,8 +921,8 @@ function Header({
   }).format(new Date());
   return (
     <>
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="header-copy">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[.15em] text-[#688071]">
             Operação de transporte
           </div>
@@ -892,7 +933,7 @@ function Header({
             Solicitação, deslocamento e manutenção em uma única visão.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="header-actions flex flex-wrap gap-2">
           <button
             onClick={onEquipment}
             className="flex h-10 items-center gap-2 rounded-xl border border-[#d9e0db] bg-white px-3.5 text-sm font-medium shadow-sm hover:-translate-y-0.5 hover:border-[#cdd5d0] hover:bg-[#fafbfa]"
