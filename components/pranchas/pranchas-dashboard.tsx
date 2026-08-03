@@ -1995,16 +1995,20 @@ function FleetStatus({
             key={f.numero}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-base font-semibold tabular-nums text-[#303632]">
-                Prancha {f.prancha}
-                <span className="mt-0.5 block text-[11px] font-medium text-[#7a847e]">Frota {f.numero}</span>
-              </p>
-              <div className="flex items-center gap-1">
+              <div className="min-w-0">
+                <p className="text-base font-semibold tabular-nums text-[#303632]">
+                  Frota {f.numero}
+                </p>
+                <p className="mt-0.5 text-[11px] font-medium text-[#7a847e]">
+                  Prancha {f.prancha}
+                </p>
                 {f.tipo && (
-                  <span className="rounded-md bg-[#f1f3f2] px-1.5 py-0.5 text-[9px] font-medium text-[#747d78]">
+                  <span className="mt-1.5 inline-flex rounded-md bg-[#f1f3f2] px-1.5 py-0.5 text-[9px] font-medium text-[#747d78]">
                     Bitola Aberta
                   </span>
                 )}
+              </div>
+              <div className="flex items-center gap-1">
                 <div
                   className="relative"
                   ref={openMenu === f.numero ? activeMenuRef : undefined}
