@@ -343,6 +343,16 @@ table td {
   border-color: #cfd6d2;
   box-shadow: 0 5px 14px rgba(18, 24, 21, 0.045);
 }
+.fleet-metric {
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.fleet-metric:hover {
+  transform: translateY(-2px);
+  border-color: #cfd6d2;
+  box-shadow: 0 8px 22px rgba(18, 24, 21, 0.055);
+}
 /* Indicadores compactos, com leitura imediata. */
 .mt-5.grid.grid-cols-2 > .panel {
   min-height: 70px;
