@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -2223,6 +2224,10 @@ function Modal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-[#101914]/40" />
         <Dialog.Content
+          onInteractOutside={(event) => {
+            if ((event.target as HTMLElement)?.closest?.("[data-floating-dropdown]"))
+              event.preventDefault();
+          }}
           className={`fadein fixed left-1/2 top-1/2 z-50 max-h-[92vh] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-2xl outline-none ${wide ? "max-w-2xl" : "max-w-md"}`}
         >
           <div className="flex justify-between border-b p-5">
@@ -3068,6 +3073,7 @@ function FleetCombobox({
 }) {
   const [query, setQuery] = useState(""),
     [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLInputElement>(null);
   const selected = frotas.find((f) => f.numero === value);
   const options = frotas.filter((f) =>
     `${f.numero} ${f.prancha} ${f.tipo || ""}`
@@ -3082,6 +3088,7 @@ function FleetCombobox({
           className="pointer-events-none absolute left-3 top-3.5 text-[#8a938e]"
         />
         <input
+          ref={anchorRef}
           className="field pl-9"
           value={
             open
@@ -3100,8 +3107,8 @@ function FleetCombobox({
           }}
           placeholder="Pesquisar frota ou prancha..."
         />
-        {open && (
-          <div className="absolute z-30 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
+        <FloatingDropdown open={open} anchorRef={anchorRef}>
+          <div className="max-h-[inherit] overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
             {options.map((f) => (
               <button
                 type="button"
@@ -3140,9 +3147,57 @@ function FleetCombobox({
               </p>
             )}
           </div>
-        )}
+        </FloatingDropdown>
       </div>
     </div>
+  );
+}
+function FloatingDropdown({
+  open,
+  anchorRef,
+  children,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+}) {
+  const [position, setPosition] = useState<React.CSSProperties>({});
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const viewportPadding = 8;
+      const preferredHeight = 260;
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const spaceAbove = rect.top - viewportPadding;
+      const placeAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(140, Math.min(preferredHeight, placeAbove ? spaceAbove - 8 : spaceBelow - 8));
+      setPosition({
+        position: "fixed",
+        zIndex: 100,
+        left: Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - rect.width - viewportPadding)),
+        top: placeAbove ? Math.max(viewportPadding, rect.top - maxHeight - 6) : rect.bottom + 6,
+        width: Math.min(rect.width, window.innerWidth - viewportPadding * 2),
+        maxHeight,
+        pointerEvents: "auto",
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, anchorRef]);
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
+    <div data-floating-dropdown style={position}>
+      {children}
+    </div>,
+    document.body,
   );
 }
 function DriverCombobox({
@@ -3156,6 +3211,7 @@ function DriverCombobox({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLInputElement>(null);
   const options = motoristas.filter((motorista) =>
     motorista.toLowerCase().includes(query.toLowerCase()),
   );
@@ -3163,6 +3219,7 @@ function DriverCombobox({
     <div className="relative">
       <Search size={15} className="pointer-events-none absolute left-3 top-3.5 text-[#8a938e]" />
       <input
+        ref={anchorRef}
         readOnly
         className="field cursor-pointer pl-9"
         value={open ? query : value || ""}
@@ -3170,8 +3227,8 @@ function DriverCombobox({
         onClick={() => setOpen(true)}
         placeholder="Pesquisar motorista..."
       />
-      {open && (
-        <div className="absolute z-30 mt-2 max-h-52 w-full overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
+      <FloatingDropdown open={open} anchorRef={anchorRef}>
+        <div className="max-h-[inherit] overflow-y-auto rounded-xl border border-[#e2e6e3] bg-white p-1.5 shadow-xl">
           <label className="mb-1.5 flex items-center gap-2 rounded-lg border border-[#e6eae7] px-2.5">
             <Search size={13} className="text-[#8a938e]" />
             <input
@@ -3194,7 +3251,7 @@ function DriverCombobox({
           ))}
           {!options.length && <p className="p-3 text-center text-xs text-[#8b948f]">Nenhum motorista encontrado</p>}
         </div>
-      )}
+      </FloatingDropdown>
     </div>
   );
 }
