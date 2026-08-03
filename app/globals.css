@@ -593,6 +593,69 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::selection {
   background: rgba(59, 130, 246, 0.3);
 }
+.fleet-mini-card {
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+.fleet-mini-card:hover,
+.fleet-mini-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: #ccd5cf;
+  box-shadow: 0 8px 22px rgba(24, 36, 29, 0.08);
+}
+.fleet-mini-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(23, 78, 55, 0.13), 0 8px 22px rgba(24, 36, 29, 0.08);
+}
+.fleet-badge {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: #eef1ef;
+  padding: 3px 8px;
+  color: #59635d;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.fleet-badge-available { background: #ecfdf5; color: #047857; }
+.fleet-badge-transit { background: #eff6ff; color: #1d4ed8; }
+.fleet-badge-maintenance { background: #fff7ed; color: #c2410c; }
+.fleet-badge-warning,
+.fleet-badge-preos { background: #fffbeb; color: #a16207; }
+.fleet-detail dt {
+  color: #7b857f;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.fleet-detail dd {
+  margin-top: 4px;
+  color: #303632;
+  font-size: 14px;
+  font-weight: 500;
+}
+html.dark .fleet-mini-card {
+  border-color: #2b3138 !important;
+  background: #20242a !important;
+}
+html.dark .fleet-mini-card:hover,
+html.dark .fleet-mini-card:focus-visible {
+  border-color: #46505a !important;
+  background: #262c33 !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+}
+html.dark .fleet-badge { background: #2b3138; color: #d7dce1; }
+html.dark .fleet-badge-available { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; }
+html.dark .fleet-badge-transit { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+html.dark .fleet-badge-maintenance { background: rgba(249, 115, 22, 0.15); color: #fdba74; }
+html.dark .fleet-badge-warning,
+html.dark .fleet-badge-preos { background: rgba(245, 158, 11, 0.14); color: #fcd34d; }
+html.dark .fleet-detail dd { color: #f5f5f5; }
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

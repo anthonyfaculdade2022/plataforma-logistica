@@ -674,6 +674,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
               />
               <FleetStatus
                 frotas={frotas}
+                fretes={fretes}
+                manutencoes={manutencoes}
                 onPreOs={setPreOsFrota}
                 onNoDriver={(numero) =>
                   setFrotas((items) =>
@@ -715,6 +717,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         <div className="p-5">
           <FleetStatus
             frotas={frotas}
+            fretes={fretes}
+            manutencoes={manutencoes}
             statusFilter={fleetViewFilter}
             onPreOs={setPreOsFrota}
             onNoDriver={(numero) => setFrotas((items) => items.map((item) => item.numero === numero ? { ...item, status: "Disponível", semMotorista: true } : item))}
@@ -1949,6 +1953,8 @@ function Whatsapp({
 }
 function FleetStatus({
   frotas,
+  fretes,
+  manutencoes,
   statusFilter,
   onPreOs,
   onLocation,
@@ -1956,6 +1962,8 @@ function FleetStatus({
   onMaintenance,
 }: {
   frotas: Frota[];
+  fretes: Frete[];
+  manutencoes: Manutencao[];
   statusFilter?: "disponiveis" | "sem-motorista" | "em-frete" | "manutencao" | null;
   onPreOs: (f: Frota) => void;
   onLocation: (numero: string, location: string) => void;
@@ -1963,6 +1971,7 @@ function FleetStatus({
   onMaintenance: (f: Frota) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [selectedFleet, setSelectedFleet] = useState<Frota | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [editingLocation, setEditingLocation] = useState<string | null>(null);
   const activeMenuRef = useRef<HTMLDivElement | null>(null);
@@ -1985,24 +1994,41 @@ function FleetStatus({
     Manutenção: "bg-orange-500",
   };
   const filtered = frotas.filter((f) => {
+    const linkedDrivers = fretes
+      .flatMap((frete) => getEquipeTransporte(frete))
+      .filter((item) => item.frota === f.numero)
+      .map((item) => item.motorista)
+      .join(" ");
     const matchesIndicator =
       !statusFilter ||
       (statusFilter === "disponiveis" && f.status === "Disponível" && !f.semMotorista) ||
       (statusFilter === "sem-motorista" && Boolean(f.semMotorista)) ||
       (statusFilter === "em-frete" && f.status === "Em Frete") ||
       (statusFilter === "manutencao" && (f.status === "Manutenção" || Boolean(f.possuiPreOs)));
-    return matchesIndicator && `${f.numero} ${f.prancha} ${f.status} ${f.localDisponivel || ""}`
+    return matchesIndicator && `${f.numero} ${f.prancha} ${f.status} ${f.localDisponivel || ""} ${linkedDrivers}`
       .toLowerCase()
       .includes(query.toLowerCase());
   });
+  const selectedFretes = selectedFleet
+    ? fretes.filter((frete) => getEquipeTransporte(frete).some((item) => item.frota === selectedFleet.numero) || frete.frota === selectedFleet.numero)
+    : [];
+  const currentFrete = selectedFretes.find((frete) => frete.status === "Em Frete");
+  const lastFrete = selectedFretes[0];
+  const selectedDriver = selectedFleet && currentFrete
+    ? getEquipeTransporte(currentFrete).find((item) => item.frota === selectedFleet.numero)?.motorista || currentFrete.motorista
+    : undefined;
+  const selectedMaintenances = selectedFleet
+    ? manutencoes.filter((item) => item.frota === selectedFleet.numero)
+    : [];
   return (
+    <>
     <section className="panel p-4">
       <div className="mb-3 flex items-center gap-2.5">
         <CircleGauge size={16} className="text-[#69726d]" />
         <div>
           <h2 className="text-sm font-medium">Status das Pranchas</h2>
           <p className="mt-0.5 text-[11px] text-[#8a938e]">
-            Visão rápida das 7 frotas
+            {frotas.length} pranchas cadastradas
           </p>
         </div>
       </div>
@@ -2012,20 +2038,23 @@ function FleetStatus({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full bg-transparent text-xs outline-none"
-          placeholder="Pesquisar frota..."
+          placeholder="Pesquisar prancha, frota ou motorista..."
         />
       </label>
-      <div className="divide-y divide-[#edf0ee]">
+      <div className="grid gap-2.5">
         {filtered.map((f) => (
           <div
-            className={`group relative px-1 py-3 transition-colors duration-200 first:pt-2 last:pb-1 hover:bg-[#fafbfa] ${openMenu === f.numero ? "z-30" : "z-0"}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectedFleet(f)}
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedFleet(f); }}
+            className={`fleet-mini-card group relative rounded-xl border border-[#e8ece9] bg-white p-3.5 outline-none ${openMenu === f.numero ? "z-30" : "z-0"}`}
             key={f.numero}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-semibold tabular-nums text-[#303632]">
-                {f.numero}
-                <span className="mx-2 font-normal text-[#c0c6c2]">|</span>
-                <span className="font-medium text-[#69736d]">{f.prancha}</span>
+              <p className="text-base font-semibold tabular-nums text-[#303632]">
+                Prancha {f.prancha}
+                <span className="mt-0.5 block text-[11px] font-medium text-[#7a847e]">Frota {f.numero}</span>
               </p>
               <div className="flex items-center gap-1">
                 {f.tipo && (
@@ -2102,20 +2131,13 @@ function FleetStatus({
                 </div>
               </div>
             </div>
-            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-[#58635c]">
-              <i
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  f.status === "Disponível" && f.semMotorista
-                    ? "bg-amber-400"
-                    : colors[f.status]
-                }`}
-              />
-              {f.status}
-              {f.semMotorista && (
-                <span className="font-normal text-[#7a837e]">
-                  • Sem motorista
-                </span>
-              )}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className={`fleet-badge ${f.status === "Manutenção" ? "fleet-badge-maintenance" : f.status === "Em Frete" ? "fleet-badge-transit" : "fleet-badge-available"}`}>
+                <i className={`h-1.5 w-1.5 rounded-full ${colors[f.status]}`} />
+                {f.status}
+              </span>
+              {f.semMotorista && <span className="fleet-badge fleet-badge-warning">Sem Motorista</span>}
+              {f.possuiPreOs && <span className="fleet-badge fleet-badge-preos">Pré-OS</span>}
             </div>
             {editingLocation === f.numero ? (
               <label className="mt-1.5 flex min-w-0 items-center gap-1.5">
@@ -2126,6 +2148,7 @@ function FleetStatus({
                   key={`location-${f.numero}`}
                   value={f.localDisponivel || ""}
                   onChange={(event) => onLocation(f.numero, event.target.value)}
+                  onClick={(event) => event.stopPropagation()}
                   onBlur={() => setEditingLocation(null)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") setEditingLocation(null);
@@ -2134,20 +2157,23 @@ function FleetStatus({
                   placeholder="Informar localização"
                 />
               </label>
-            ) : (
+            ) : f.localDisponivel ? (
               <p className="mt-1.5 flex min-h-5 items-center gap-1.5 text-[11px] text-[#68726c]">
                 <MapPin size={12} className="shrink-0 text-[#808a84]" />
                 <span className="truncate">
-                  {f.localDisponivel || "Localização não informada"}
+                  {f.localDisponivel}
                 </span>
               </p>
-            )}
+            ) : null}
             {f.possuiPreOs && (
               <button
                 type="button"
-                onClick={() => onPreOs(f)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onPreOs(f);
+                }}
                 title={`Pré-OS ${f.numeroPreOs}`}
-                className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-medium text-[#7b847f] hover:text-[#174e37]"
+                className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium text-[#7b847f] hover:text-[#174e37]"
               >
                 <Wrench size={11} /> Pré-OS Ativa
               </button>
@@ -2161,6 +2187,32 @@ function FleetStatus({
         )}
       </div>
     </section>
+    <Drawer open={Boolean(selectedFleet)} close={() => setSelectedFleet(null)} title={selectedFleet ? `Prancha ${selectedFleet.prancha}` : "Detalhes da Prancha"}>
+      {selectedFleet && (
+        <div className="fleet-detail p-5">
+          <div className="rounded-xl border border-[#e5e9e6] bg-[#f8faf8] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#7b857f]">Frota</p>
+            <p className="mt-1 text-xl font-semibold">{selectedFleet.numero}</p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span className="fleet-badge">{selectedFleet.status}</span>
+              {selectedFleet.semMotorista && <span className="fleet-badge fleet-badge-warning">Sem Motorista</span>}
+              {selectedFleet.possuiPreOs && <span className="fleet-badge fleet-badge-warning">Pré-OS</span>}
+              {selectedFleet.tipo && <span className="fleet-badge">Bitola Aberta</span>}
+            </div>
+          </div>
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div><dt>Motorista</dt><dd>{selectedDriver || "Não vinculado"}</dd></div>
+            <div><dt>Localização</dt><dd>{selectedFleet.localDisponivel || "Não informada"}</dd></div>
+            <div><dt>Equipamento</dt><dd>{currentFrete ? equipmentText(currentFrete) || "Não informado" : "Sem frete ativo"}</dd></div>
+            <div><dt>Disponibilidade</dt><dd>{selectedFleet.status === "Disponível" && !selectedFleet.semMotorista ? "Apta para operação" : "Indisponível"}</dd></div>
+          </dl>
+          <section className="mt-6 border-t border-[#e8ece9] pt-5"><h3 className="text-sm font-semibold">Último frete</h3>{lastFrete ? <div className="mt-3 rounded-xl border border-[#e5e9e6] p-3 text-sm"><strong>{lastFrete.origem} → {lastFrete.destino}</strong><span className="mt-1 block text-xs text-[#7b857f]">{equipmentText(lastFrete) || "Sem equipamento"} · {lastFrete.status}</span></div> : <p className="mt-2 text-sm text-[#87908b]">Nenhum frete registrado.</p>}</section>
+          <section className="mt-6 border-t border-[#e8ece9] pt-5"><h3 className="text-sm font-semibold">Histórico</h3><p className="mt-2 text-sm text-[#6f7973]">{selectedFretes.length} frete(s) registrado(s) para esta prancha.</p></section>
+          <section className="mt-6 border-t border-[#e8ece9] pt-5"><h3 className="text-sm font-semibold">Manutenções</h3>{selectedMaintenances.length ? <div className="mt-3 space-y-2">{selectedMaintenances.slice(0, 4).map((item) => <div key={item.id} className="rounded-lg bg-[#f8faf8] p-3 text-sm"><strong>{item.servico}</strong><span className="mt-1 block text-xs text-[#7b857f]">{item.status}</span></div>)}</div> : <p className="mt-2 text-sm text-[#87908b]">Nenhuma manutenção registrada.</p>}</section>
+        </div>
+      )}
+    </Drawer>
+    </>
   );
 }
 
