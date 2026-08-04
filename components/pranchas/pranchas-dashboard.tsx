@@ -1859,6 +1859,9 @@ function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel
   cancel: (frete: Frete) => void;
   finish: (frete: Frete) => void;
   maintenance: (fleet: Frota) => void;
+  editMaintenance: (manutencao: Manutencao) => void;
+  finishMaintenance: (manutencao: Manutencao) => void;
+  
 }) {
   const related = fleet ? fretes.filter((frete) => frete.frota === fleet.numero || getEquipeTransporte(frete).some((team) => team.frota === fleet.numero)) : [];
   const active = related.find((frete) => frete.status === "Em Frete");
