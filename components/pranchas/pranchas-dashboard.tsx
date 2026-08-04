@@ -732,108 +732,141 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
           />
         </div>
       </Drawer>
-      <FleetOperationsDrawer
-        fleet={selectedFleetDetails}
-        fretes={fretes}
-        manutencoes={manutencoes}
-        close={() => setSelectedFleetDetails(null)}
-        edit={(frete) => { setSelectedFleetDetails(null); setEditFrete(frete); }}
-        cancel={(frete) => { setSelectedFleetDetails(null); setCancelFrete(frete); }}
-        finish={(frete) => {
-          setSelectedFleetDetails(null);
-          if (!advanceSequence(frete)) setCompleteFrete(frete);
-        }}
-        maintenance={(fleet) => { setSelectedFleetDetails(null); setMaintenanceFrota(fleet.numero); setMaintenanceOpen(true); }}
-      />
-      <FreteDrawer
-        frete={selected}
-        close={() => setSelected(null)}
-        start={() => {
-          setStartFrete(selected);
-          setSelected(null);
-        }}
-        complete={() => {
-          if (selected && advanceSequence(selected)) {
-            setSelected(null);
-            return;
-          }
-          setCompleteFrete(selected);
-          setSelected(null);
-        }}
-      />
-      <FinalizeFreteModal
-        frete={completeFrete}
-        close={() => setCompleteFrete(null)}
-        confirm={complete}
-      />
-      <NewFrete
-        open={newOpen}
-        close={() => setNewOpen(false)}
-        equipamentos={equipamentos}
-        add={(f) => setFretes((fs) => [f, ...fs])}
-      />
-      <EquipmentModal
-        open={equipmentOpen}
-        close={() => setEquipmentOpen(false)}
-        equipamentos={equipamentos}
-        add={(e) => setEquipamentos((es) => [e, ...es])}
-      />
-      <StartModal
-        frete={startFrete}
-        close={() => setStartFrete(null)}
-        frotas={frotas}
-        motoristas={obterMotoristasDisponiveis(
-          fretes.flatMap((item) =>
-            getEquipeTransporte(item).map((member) => member.motorista),
-          ),
-        )}
-        confirm={start}
-      />
-      <CancelFreteModal
-        frete={cancelFrete}
-        close={() => setCancelFrete(null)}
-        confirm={confirmCancellation}
-      />
-      <EditFreteModal
-        frete={editFrete}
-        frotas={frotas}
-        equipamentos={equipamentos}
-        close={() => setEditFrete(null)}
-        save={saveEdit}
-      />
-      <PreOsModal
-        frota={preOsFrota}
-        close={() => setPreOsFrota(null)}
-        save={(numero, servico) => {
-          setFrotas((fs) =>
-            fs.map((f) =>
-              f.numero === preOsFrota?.numero
-                ? {
-                    ...f,
-                    possuiPreOs: true,
-                    numeroPreOs: numero,
-                    servicoPreOs: servico,
-                  }
-                : f,
-            ),
-          );
-          setPreOsFrota(null);
-        }}
-      />
-      <MaintenanceTrackingModal
-        open={maintenanceOpen}
-        close={() => {
-          setMaintenanceOpen(false);
-          setMaintenanceFrota(null);
-        }}
-        frotas={frotas}
-        fretes={fretes}
-        initialFrota={maintenanceFrota}
-        save={addMaintenance}
-      />
-    </div>
-  );
-}
+     <FleetOperationsDrawer
+  fleet={selectedFleetDetails}
+  fretes={fretes}
+  manutencoes={manutencoes}
+  close={() => setSelectedFleetDetails(null)}
+
+  edit={(frete) => {
+    setSelectedFleetDetails(null);
+    setEditFrete(frete);
+  }}
+
+  cancel={(frete) => {
+    setSelectedFleetDetails(null);
+    setCancelFrete(frete);
+  }}
+
+  finish={(frete) => {
+    setSelectedFleetDetails(null);
+    if (!advanceSequence(frete)) {
+      setCompleteFrete(frete);
+    }
+  }}
+
+  maintenance={(fleet) => {
+    setSelectedFleetDetails(null);
+    setMaintenanceFrota(fleet.numero);
+    setMaintenanceOpen(true);
+  }}
+
+  editMaintenance={(manutencao) => {
+    setSelectedFleetDetails(null);
+    setMaintenanceFrota(manutencao.frota);
+    setMaintenanceOpen(true);
+  }}
+
+  finishMaintenance={(manutencao) => {
+    finishMaintenance(manutencao);
+    setSelectedFleetDetails(null);
+  }}
+/>
+
+<FreteDrawer
+  frete={selected}
+  close={() => setSelected(null)}
+  start={() => {
+    setStartFrete(selected);
+    setSelected(null);
+  }}
+  complete={() => {
+    if (selected && advanceSequence(selected)) {
+      setSelected(null);
+      return;
+    }
+    setCompleteFrete(selected);
+    setSelected(null);
+  }}
+/>
+
+<FinalizeFreteModal
+  frete={completeFrete}
+  close={() => setCompleteFrete(null)}
+  confirm={complete}
+/>
+
+<NewFrete
+  open={newOpen}
+  close={() => setNewOpen(false)}
+  equipamentos={equipamentos}
+  add={(f) => setFretes((fs) => [f, ...fs])}
+/>
+
+<EquipmentModal
+  open={equipmentOpen}
+  close={() => setEquipmentOpen(false)}
+  equipamentos={equipamentos}
+  add={(e) => setEquipamentos((es) => [e, ...es])}
+/>
+
+<StartModal
+  frete={startFrete}
+  close={() => setStartFrete(null)}
+  frotas={frotas}
+  motoristas={obterMotoristasDisponiveis(
+    fretes.flatMap((item) =>
+      getEquipeTransporte(item).map((member) => member.motorista),
+    ),
+  )}
+  confirm={start}
+/>
+
+<CancelFreteModal
+  frete={cancelFrete}
+  close={() => setCancelFrete(null)}
+  confirm={confirmCancellation}
+/>
+
+<EditFreteModal
+  frete={editFrete}
+  frotas={frotas}
+  equipamentos={equipamentos}
+  close={() => setEditFrete(null)}
+  save={saveEdit}
+/>
+
+<PreOsModal
+  frota={preOsFrota}
+  close={() => setPreOsFrota(null)}
+  save={(numero, servico) => {
+    setFrotas((fs) =>
+      fs.map((f) =>
+        f.numero === preOsFrota?.numero
+          ? {
+              ...f,
+              possuiPreOs: true,
+              numeroPreOs: numero,
+              servicoPreOs: servico,
+            }
+          : f,
+      ),
+    );
+    setPreOsFrota(null);
+  }}
+/>
+
+<MaintenanceTrackingModal
+  open={maintenanceOpen}
+  close={() => {
+    setMaintenanceOpen(false);
+    setMaintenanceFrota(null);
+  }}
+  frotas={frotas}
+  fretes={fretes}
+  initialFrota={maintenanceFrota}
+  save={addMaintenance}
+/>
 
 function Brand() {
   return (
