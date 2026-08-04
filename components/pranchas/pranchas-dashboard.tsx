@@ -1854,7 +1854,7 @@ function DataTable({
   );
 }
 
-function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel, finish, maintenance }: {
+function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel, finish, maintenance, editmaintenance, finishMaintenance }: {
   fleet: Frota | null;
   fretes: Frete[];
   manutencoes: Manutencao[];
