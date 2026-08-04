@@ -1866,43 +1866,186 @@ function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel
   editMaintenance: (manutencao: Manutencao) => void;
   finishMaintenance: (manutencao: Manutencao) => void;
   
+
 }) {
   const related = fleet ? fretes.filter((frete) => frete.frota === fleet.numero || getEquipeTransporte(frete).some((team) => team.frota === fleet.numero)) : [];
   const active = related.find((frete) => frete.status === "Em Frete");
   const last = active || related[0];
   const activeMaintenance = fleet ? manutencoes.find((item) => item.frota === fleet.numero && item.status === "Em manutenção") : undefined;
   const driver = active && fleet ? getEquipeTransporte(active).find((team) => team.frota === fleet.numero)?.motorista || active.motorista : undefined;
+    const activeMaintenance =
+  fleet
+    ? manutencoes.find(
+        (m) =>
+          m.frota === fleet.numero &&
+          m.status === "Em manutenção",
+      )
+    : null;
   return (
-    <Drawer open={Boolean(fleet)} close={close} title={fleet ? `Frota ${fleet.numero}` : "Detalhes da Prancha"}>
-      {fleet && <div className="p-5">
+  <Drawer
+    open={Boolean(fleet)}
+    close={close}
+    title={fleet ? `Frota ${fleet.numero}` : "Detalhes da Prancha"}
+  >
+    {fleet && (
+      <div className="p-5">
         <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] pb-4">
-          <div><p className="ds-caption uppercase tracking-[.1em]">Prancha</p><p className="mt-1 text-xl font-semibold tabular-nums">{fleet.prancha}</p></div>
-          <span className={`ds-badge ${fleet.status === "Disponível" ? "ds-badge-success" : fleet.status === "Em Frete" ? "ds-badge-info" : "ds-badge-warning"}`}>{fleet.status}</span>
+          <div>
+            <p className="ds-caption uppercase tracking-[.1em]">Prancha</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums">
+              {fleet.prancha}
+            </p>
+          </div>
+
+          <span
+            className={`ds-badge ${
+              fleet.status === "Disponível"
+                ? "ds-badge-success"
+                : fleet.status === "Em Frete"
+                  ? "ds-badge-info"
+                  : "ds-badge-warning"
+            }`}
+          >
+            {fleet.status}
+          </span>
         </div>
+
         <section className="py-4">
           <h3 className="ds-h3">Operação atual</h3>
+
           <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div><dt className="ds-caption">Origem</dt><dd className="mt-1 text-sm font-medium">{last?.origem || "—"}</dd></div>
-            <div><dt className="ds-caption">Destino</dt><dd className="mt-1 text-sm font-medium">{last?.destino || "—"}</dd></div>
-            <div><dt className="ds-caption">Motorista</dt><dd className="mt-1 text-sm font-medium">{driver || "Sem motorista"}</dd></div>
-            <div><dt className="ds-caption">Equipamento</dt><dd className="mt-1 text-sm font-medium">{last ? equipmentText(last) || "—" : "—"}</dd></div>
-            <div><dt className="ds-caption">Horário</dt><dd className="mt-1 text-sm font-medium">{last?.horario || "—"}</dd></div>
-            <div><dt className="ds-caption">Localização</dt><dd className="mt-1 text-sm font-medium">{fleet.localDisponivel || activeMaintenance?.localizacao || "—"}</dd></div>
+            <div>
+              <dt className="ds-caption">Origem</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {last?.origem || "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="ds-caption">Destino</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {last?.destino || "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="ds-caption">Motorista</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {driver || "Sem motorista"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="ds-caption">Equipamento</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {last ? equipmentText(last) || "—" : "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="ds-caption">Horário</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {last?.horario || "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="ds-caption">Localização</dt>
+              <dd className="mt-1 text-sm font-medium">
+                {fleet.localDisponivel ||
+                  activeMaintenance?.localizacao ||
+                  "—"}
+              </dd>
+            </div>
           </dl>
         </section>
-        {last && <section className="border-t border-[var(--ds-border)] py-4">
-          <h3 className="ds-h3">Responsáveis e equipe</h3>
-          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div><dt className="ds-caption">Solicitante</dt><dd className="mt-1 text-sm">{last.solicitante}</dd></div>
-            <div><dt className="ds-caption">Setor</dt><dd className="mt-1 text-sm">{last.setor}</dd></div>
-            <div className="sm:col-span-2"><dt className="ds-caption">Equipe</dt><dd className="mt-1 text-sm">{getEquipeTransporte(last).map((team) => `${team.frota} · ${team.motorista}`).join(" | ") || "Não vinculada"}</dd></div>
-          </dl>
-        </section>}
+
+        {last && (
+          <section className="border-t border-[var(--ds-border)] py-4">
+            <h3 className="ds-h3">Responsáveis e equipe</h3>
+
+            <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt className="ds-caption">Solicitante</dt>
+                <dd className="mt-1 text-sm">{last.solicitante}</dd>
+              </div>
+
+              <div>
+                <dt className="ds-caption">Setor</dt>
+                <dd className="mt-1 text-sm">{last.setor}</dd>
+              </div>
+
+              <div className="sm:col-span-2">
+                <dt className="ds-caption">Equipe</dt>
+                <dd className="mt-1 text-sm">
+                  {getEquipeTransporte(last)
+                    .map(
+                      (team) =>
+                        `${team.frota} · ${team.motorista}`,
+                    )
+                    .join(" | ") || "Não vinculada"}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        )}
+
         <div className="sticky bottom-0 mt-3 flex flex-wrap gap-2 border-t border-[var(--ds-border)] bg-[var(--ds-surface)] pt-4">
-          {active && <><Button variant="secondary" onClick={() => edit(active)}><Pencil size={14} /> Editar</Button><Button variant="danger" onClick={() => cancel(active)}><X size={14} /> Cancelar</Button><Button variant="primary" onClick={() => finish(active)}>Finalizar</Button></>}
-          {fleet.status !== "Manutenção" && <Button variant="secondary" onClick={() => maintenance(fleet)}><Wrench size={14} /> Manutenção</Button>}
-        </div>
-      </div>}
+
+          {active && (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => edit(active)}
+              >
+                <Pencil size={14} />
+                Editar
+              </Button>
+
+              <Button
+                variant="danger"
+                onClick={() => cancel(active)}
+              >
+                <X size={14} />
+                Cancelar
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={() => finish(active)}
+              >
+                Finalizar
+              </Button>
+            </>
+          )}
+
+          {activeMaintenance ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => editMaintenance(activeMaintenance)}
+              >
+                <Pencil size={14} />
+                Editar manutenção
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={() => finishMaintenance(activeMaintenance)}
+              >
+                <Check size={14} />
+                Finalizar manutenção
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() => maintenance(fleet)}
+            >
+              <Wrench size={14} />
+              Manutenção
+            </Button>
+          )}
     </Drawer>
   );
 }
