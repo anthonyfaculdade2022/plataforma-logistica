@@ -2037,7 +2037,7 @@ function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel
                 Finalizar manutenção
               </Button>
             </>
-          ) : (
+                    ) : (
             <Button
               variant="secondary"
               onClick={() => maintenance(fleet)}
@@ -2046,7 +2046,9 @@ function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel
               Manutenção
             </Button>
           )}
+
         </div>
+      )}
     </Drawer>
   );
 }
