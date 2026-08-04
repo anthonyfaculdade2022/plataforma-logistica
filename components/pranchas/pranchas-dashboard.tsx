@@ -867,6 +867,8 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
   initialFrota={maintenanceFrota}
   save={addMaintenance}
 />
+);
+}
 
 function Brand() {
   return (
