@@ -2046,6 +2046,7 @@ function FleetOperationsDrawer({ fleet, fretes, manutencoes, close, edit, cancel
               Manutenção
             </Button>
           )}
+        </div>
     </Drawer>
   );
 }
