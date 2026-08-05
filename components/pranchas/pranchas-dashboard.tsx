@@ -83,10 +83,13 @@ import { Button } from "@/components/ui/system";
 
 const statuses: Status[] = ["Pendente", "Em Frete", "Concluído", "Cancelado"];
 const priorityStyle = {
+  Urgente: "bg-red-100 text-red-800",
   Alta: "bg-red-50 text-red-700",
+  Normal: "bg-amber-50 text-amber-700",
   Média: "bg-amber-50 text-amber-700",
   Baixa: "bg-slate-100 text-slate-600",
 };
+const priorityOrder = { Urgente: 0, Alta: 1, Normal: 2, Média: 2, Baixa: 3 } as const;
 const statusStyle: Record<Status, string> = {
   Pendente: "bg-amber-50 text-amber-700 border-amber-200",
   "Em Frete": "bg-blue-50 text-blue-700 border-blue-200",
@@ -476,6 +479,11 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
       d.componente === "Ambos" && !d.mesmaOs
         ? `Cavalo: ${d.numeroOsCavalo} · Prancha: ${d.numeroOsPrancha}`
         : d.numeroOs || "";
+    const serviceSummary = d.componente === "Cavalo"
+      ? d.servicoCavalo || ""
+      : d.componente === "Prancha"
+        ? d.servicoPrancha || ""
+        : [d.servicoCavalo && `Cavalo: ${d.servicoCavalo}`, d.servicoPrancha && `Prancha: ${d.servicoPrancha}`].filter(Boolean).join(" · ");
     setManutencoes((ms) => [
       {
         id: `MN-${202 + ms.length}`,
@@ -490,7 +498,9 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         entradaHora: d.entradaHora,
         tipo: d.tipo,
         componente: d.componente,
-        servico: d.servico,
+        servico: serviceSummary,
+        servicoCavalo: d.servicoCavalo,
+        servicoPrancha: d.servicoPrancha,
         observacoes: d.observacoes,
         previsao: d.previsao === "sim",
         previsaoData: d.previsaoData
@@ -531,7 +541,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         frota: d.novaFrota,
         motorista: d.novoMotorista,
         equipeTransporte: equipeAtualizada,
-        motivoTransferencia: `Manutenção da frota ${d.frota}: ${d.servico}`,
+        motivoTransferencia: `Manutenção da frota ${d.frota}: ${serviceSummary}`,
         transferidoEm: `${n.date} ${n.time}`,
       });
     }
@@ -570,7 +580,7 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
     const maintenance = manutencoes.filter((m) => m.status === "Em manutenção");
     const maintenanceFleetNumbers = new Set(maintenance.map((m) => m.frota));
     const fleetSituation = FROTAS_FIXAS.filter(
-      (config) => !maintenanceFleetNumbers.has(config.numero),
+      (config) => !maintenanceFleetNumbers.has(config.numero) && !frotas.find((fleet) => fleet.numero === config.numero)?.semMotorista,
     ).map((config) => {
       const movingFreight = fretes.find(
         (f) =>
@@ -592,8 +602,24 @@ export function PranchasDashboard({ user }: { user: AuthUser }) {
         FROTAS_FIXAS.findIndex((f) => f.numero === a.frota) -
         FROTAS_FIXAS.findIndex((f) => f.numero === b.frota),
     );
+    const outOfOperation = [
+      ...orderedMaintenance.map((m) => {
+        const config = getFrotaConfig(m.frota);
+        const identity = `${m.frota}/${config?.prancha || "-"}`;
+        const forecast = m.previsao ? `Previsão: ${m.previsaoData?.slice(0, 5)} às ${m.previsaoHora}.` : "Sem previsão.";
+        const services = m.componente === "Cavalo"
+          ? `Cavalo: OS ${m.numeroOsCavalo || m.numeroOs} - ${m.servicoCavalo || m.servico}`
+          : m.componente === "Prancha"
+            ? `Prancha: OS ${m.numeroOsPrancha || m.numeroOs} - ${m.servicoPrancha || m.servico}`
+            : m.numeroOsCavalo && m.numeroOsPrancha && m.numeroOsCavalo !== m.numeroOsPrancha
+              ? `Cavalo: OS ${m.numeroOsCavalo} - ${m.servicoCavalo || "-"} | Prancha: OS ${m.numeroOsPrancha} - ${m.servicoPrancha || "-"}`
+              : `OS ${m.numeroOs} | Cavalo: ${m.servicoCavalo || "-"} | Prancha: ${m.servicoPrancha || "-"}`;
+        return `*${identity}* - ${services} | Local: ${m.localizacao} | ${forecast}`;
+      }),
+      ...frotas.filter((fleet) => fleet.semMotorista && !maintenanceFleetNumbers.has(fleet.numero)).map((fleet) => `*${fleet.numero}/${fleet.prancha}* - Sem motorista.`),
+    ];
     setFlow(
-      `🚛 *SITUAÇÃO DAS PRANCHAS*\n\n${fleetSituation.join("\n\n")}\n\n================================\n\n▶️ *FRETES PENDENTES*\n\n${pending.length ? pending.map((f) => `* ${withObservation(f)}`).join("\n\n") : "Nenhum frete pendente."}\n\n================================\n\n🔧 *PRANCHAS EM MANUTENÇÃO*\n\n${orderedMaintenance.length ? orderedMaintenance.map((m) => (m.freteResumo ? `*${m.frota}* - ${m.freteResumo.replace(/\.$/, "")} interrompido. Localização: ${m.localizacao}. OS: ${m.numeroOs}. ${m.servico}. ${m.previsao ? `Previsão: ${m.previsaoData?.slice(0, 5)} às ${m.previsaoHora}.` : "Sem previsão."}` : `*${m.frota}* - ${m.servico} | OS: ${m.numeroOs} | Local: ${m.localizacao} | ${m.previsao ? `Previsão: ${m.previsaoData?.slice(0, 5)} às ${m.previsaoHora}.` : "Sem previsão."}`)).join("\n\n") : "Nenhuma prancha em manutenção."}`,
+      `🚛 *SITUAÇÃO DAS PRANCHAS*\n\n${fleetSituation.join("\n\n")}\n\n================================\n\n▶️ *FRETES PENDENTES*\n\n${pending.length ? pending.map((f) => `* ${withObservation(f)}`).join("\n\n") : "Nenhum frete pendente."}\n\n================================\n\n🔧 *MANUTENÇÃO | FORA DE OPERAÇÃO*\n\n${outOfOperation.length ? outOfOperation.join("\n\n") : "Nenhuma prancha fora de operação."}`,
     );
   };
   useEffect(() => {
@@ -1124,7 +1150,17 @@ function Kanban({
   onNewFrete: () => void;
   onNewMaintenance: () => void;
 }) {
-  const pending = fretes.filter((item) => item.status === "Pendente");
+  const pending = fretes
+    .map((item, creationOrder) => ({ item, creationOrder }))
+    .filter(({ item }) => item.status === "Pendente")
+    .sort((a, b) => {
+      const priority = priorityOrder[a.item.prioridade] - priorityOrder[b.item.prioridade];
+      if (priority) return priority;
+      const dateA = new Date(`${a.item.data.split("/").reverse().join("-")}T${a.item.horario || "00:00"}`).getTime();
+      const dateB = new Date(`${b.item.data.split("/").reverse().join("-")}T${b.item.horario || "00:00"}`).getTime();
+      return dateA - dateB || a.creationOrder - b.creationOrder;
+    })
+    .map(({ item }) => item);
   const available = frotas.filter((item) => item.status === "Disponível" && !item.semMotorista);
   const inFreight = frotas.filter((item) => item.status === "Em Frete");
   const maintenance = frotas.filter((item) => item.status === "Manutenção");
@@ -1181,9 +1217,10 @@ function WorkspaceColumn({ title, count, tone, onAdd, children }: { title: strin
 function WorkspaceEmpty() { return <div className="rounded-lg border border-dashed border-[var(--ds-border)] px-2 py-5 text-center text-[10px] text-[var(--ds-text-muted)]">Nenhum item</div>; }
 
 function PendingWorkspaceItem({ frete, onClick }: { frete: Frete; onClick: () => void }) {
+  const priorityDot = frete.prioridade === "Urgente" ? "bg-red-600" : frete.prioridade === "Alta" ? "bg-orange-500" : frete.prioridade === "Baixa" ? "bg-slate-300" : "bg-amber-400";
   return (
     <button type="button" onClick={onClick} className="workspace-pending-item w-full rounded-lg border border-[var(--ds-border)] border-l-2 border-l-amber-400 bg-[var(--ds-surface)] px-2.5 py-2 text-left hover:border-l-amber-500 hover:bg-[var(--ds-surface-hover)]">
-      <strong className="block truncate text-[11px] font-semibold">{equipmentText(frete) || "Equipamento não informado"}</strong>
+      <div className="flex items-center gap-2"><i title={`Prioridade ${frete.prioridade}`} className={`h-2 w-2 shrink-0 rounded-full ${priorityDot}`} /><strong className="block min-w-0 truncate text-[11px] font-semibold">{equipmentText(frete) || "Equipamento não informado"}</strong></div>
       <span className="mt-1 block truncate text-[10px] text-[var(--ds-text-secondary)]">{frete.origem} → {frete.destino}</span>
     </button>
   );
@@ -2603,7 +2640,7 @@ function FreteDrawer({
           <span
             className={`rounded-md px-2 py-1 text-[10px] font-medium ${priorityStyle[frete.prioridade]}`}
           >
-            {frete.prioridade === "Alta" ? "● Alta" : frete.prioridade === "Média" ? "● Média" : "● Baixa"}
+            ● {frete.prioridade === "Média" ? "Normal" : frete.prioridade}
           </span>
         </div>
       }
@@ -2800,7 +2837,7 @@ function NewFrete({
     formState: { errors },
   } = useForm<AgendamentoInput>({
     resolver: zodResolver(agendamentoSchema),
-    defaultValues: { prioridade: "Média", observacao: "" },
+    defaultValues: { prioridade: "Normal", observacao: "" },
   });
   const newStage = (): EtapaFrete => ({
     id: `ET-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -2966,7 +3003,7 @@ function NewFrete({
                     <legend className="label">Prioridade</legend>
                     <input type="hidden" {...register("prioridade")} />
                     <div className="grid grid-cols-3 gap-2">
-                      {(["Baixa", "Média", "Alta"] as const).map((option) => (
+                      {(["Urgente", "Alta", "Normal", "Baixa"] as const).map((option) => (
                         <button
                           key={option}
                           type="button"

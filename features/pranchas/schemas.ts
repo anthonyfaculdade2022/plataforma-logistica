@@ -7,13 +7,13 @@ export const agendamentoSchema = z.object({
   setor: z.string().min(2, "Informe o setor"),
   origem: z.string().min(2, "Informe a origem"),
   destino: z.string().min(2, "Informe o destino"),
-  prioridade: z.enum(["Baixa", "Média", "Alta"]),
+  prioridade: z.enum(["Urgente", "Alta", "Normal", "Baixa", "Média"]),
   observacao: z.string().max(300),
   equipamentoTipo: z.string().optional(),
 });
 export const equipeTransporteSchema = z.object({
   frota: z.string().min(1, "Selecione a frota"),
-  motorista: z.string().trim().min(2, "Informe o motorista"),
+  motorista: z.string().trim(),
 });
 export const deslocamentoSchema = z
   .object({
@@ -41,18 +41,24 @@ export const manutencaoSchema = z
     entradaHora: z.string().min(1),
     tipo: z.enum(["Preventiva", "Corretiva"]),
     componente: z.enum(["Cavalo", "Prancha", "Ambos"]),
-    mesmaOs: z.boolean().default(true),
-    servico: z.string().min(3),
+    mesmaOs: z.boolean(),
+    servico: z.string(),
+    servicoCavalo: z.string().optional(),
+    servicoPrancha: z.string().optional(),
     observacoes: z.string(),
     previsao: z.enum(["sim", "nao"]),
     previsaoData: z.string().optional(),
     previsaoHora: z.string().optional(),
-    transferir: z.enum(["sim", "nao"]).default("nao"),
-    usarPreOs: z.enum(["sim", "nao"]).default("nao"),
+    transferir: z.enum(["sim", "nao"]),
+    usarPreOs: z.enum(["sim", "nao"]),
     novaFrota: z.string().optional(),
     novoMotorista: z.string().optional(),
   })
   .superRefine((v, c) => {
+    if ((v.componente === "Cavalo" || v.componente === "Ambos") && !v.servicoCavalo?.trim())
+      c.addIssue({ code: "custom", message: "Informe o serviço do cavalo", path: ["servicoCavalo"] });
+    if ((v.componente === "Prancha" || v.componente === "Ambos") && !v.servicoPrancha?.trim())
+      c.addIssue({ code: "custom", message: "Informe o serviço da prancha", path: ["servicoPrancha"] });
     if (v.componente === "Ambos" && !v.mesmaOs) {
       if (!v.numeroOsCavalo?.trim())
         c.addIssue({

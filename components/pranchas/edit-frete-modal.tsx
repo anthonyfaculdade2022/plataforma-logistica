@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import {
   Equipamento,
   EquipeTransporte,
@@ -16,6 +16,9 @@ import { obterMotoristasDisponiveis } from "@/features/pranchas/motoristas-confi
 type EditableFrete = Pick<
   Frete,
   | "equipamentoTipo"
+  | "data"
+  | "horario"
+  | "prioridade"
   | "origem"
   | "destino"
   | "solicitante"
@@ -35,6 +38,9 @@ const emptyData: EditableFrete = {
   observacao: "",
   etapas: [],
   equipeTransporte: [],
+  data: "",
+  horario: "",
+  prioridade: "Normal",
 };
 
 export function EditFreteModal({
@@ -57,6 +63,9 @@ export function EditFreteModal({
       equipamentoTipo: [frete.equipamentoTipo, frete.equipamentoCodigo]
         .filter(Boolean)
         .join(" "),
+      data: frete.data,
+      horario: frete.horario,
+      prioridade: frete.prioridade === "Média" ? "Normal" : frete.prioridade,
       origem: frete.origem,
       destino: frete.destino,
       solicitante: frete.solicitante,
@@ -102,12 +111,21 @@ export function EditFreteModal({
         stageIndex === index ? { ...stage, [field]: value } : stage,
       ),
     }));
+  const moveStage = (from: number, to: number) => {
+    if (to < 0 || to >= (data.etapas || []).length) return;
+    setData((current) => {
+      const etapas = [...(current.etapas || [])];
+      const [moved] = etapas.splice(from, 1);
+      etapas.splice(to, 0, moved);
+      return { ...current, etapas };
+    });
+  };
+  const addStage = () => setData((current) => ({ ...current, etapas: [...(current.etapas || []), { id: `ET-${Date.now()}`, equipamento: "", origem: "", destino: "", observacao: "" }] }));
+  const removeStage = (index: number) => setData((current) => ({ ...current, etapas: (current.etapas || []).filter((_, stageIndex) => stageIndex !== index) }));
   const team = data.equipeTransporte || [];
   const teamValid =
     (frete.status === "Pendente" || team.length > 0) &&
-    team.every(
-      (member) => member.frota && member.motorista.trim().length >= 2,
-    ) &&
+    team.every((member) => member.frota) &&
     new Set(team.map((member) => member.frota)).size === team.length;
   const valid =
     data.origem.trim() &&
@@ -169,6 +187,9 @@ export function EditFreteModal({
                 onChange={(event) => set("equipamentoTipo", event.target.value)}
               />
             </label>}
+            <label><span className="label">Data</span><input type="date" className="field" value={data.data.split("/").reverse().join("-")} onChange={(event) => set("data", event.target.value ? new Date(event.target.value + "T12:00").toLocaleDateString("pt-BR") : "")} /></label>
+            <label><span className="label">Hora</span><input type="time" className="field" value={data.horario} onChange={(event) => set("horario", event.target.value)} /></label>
+            <label className="sm:col-span-2"><span className="label">Prioridade operacional</span><select className="field" value={data.prioridade} onChange={(event) => set("prioridade", event.target.value)}><option>Urgente</option><option>Alta</option><option>Normal</option><option>Baixa</option></select></label>
             <label>
               <span className="label">Origem</span>
               <input
@@ -194,7 +215,14 @@ export function EditFreteModal({
                 </div>
                 {(data.etapas || []).map((stage, index) => (
                   <div key={stage.id} className="grid gap-3 rounded-lg border bg-white p-3 sm:grid-cols-2">
-                    <p className="text-xs font-semibold text-[#414943] sm:col-span-2">Etapa {index + 1}</p>
+                    <div className="flex items-center justify-between sm:col-span-2">
+                      <p className="text-xs font-semibold text-[#414943]">Etapa {index + 1}</p>
+                      <div className="flex gap-1">
+                        <button type="button" disabled={index === 0} onClick={() => moveStage(index, index - 1)} className="grid h-7 w-7 place-items-center rounded-md hover:bg-[#f1f4f2] disabled:opacity-30" aria-label={`Mover etapa ${index + 1} para cima`}><ChevronUp size={13} /></button>
+                        <button type="button" disabled={index === (data.etapas || []).length - 1} onClick={() => moveStage(index, index + 1)} className="grid h-7 w-7 place-items-center rounded-md hover:bg-[#f1f4f2] disabled:opacity-30" aria-label={`Mover etapa ${index + 1} para baixo`}><ChevronDown size={13} /></button>
+                        <button type="button" disabled={(data.etapas || []).length <= 1} onClick={() => removeStage(index)} className="grid h-7 w-7 place-items-center rounded-md text-red-600 hover:bg-red-50 disabled:opacity-30" aria-label={`Excluir etapa ${index + 1}`}><Trash2 size={13} /></button>
+                      </div>
+                    </div>
                     <label className="sm:col-span-2">
                       <span className="label">Equipamento</span>
                       <input
@@ -219,6 +247,7 @@ export function EditFreteModal({
                     </label>
                   </div>
                 ))}
+                <button type="button" onClick={addStage} className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#dfe5e1] py-2.5 text-xs font-medium text-[#59635d] hover:bg-white"><Plus size={13} /> Adicionar etapa</button>
               </section>
             )}
 

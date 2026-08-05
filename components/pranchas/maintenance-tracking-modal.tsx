@@ -83,9 +83,10 @@ export function MaintenanceTrackingModal({
   useEffect(() => {
     if (usarPreOs === "sim" && selectedFleet?.possuiPreOs) {
       setValue("numeroOs", selectedFleet.numeroPreOs || "");
-      setValue("servico", selectedFleet.servicoPreOs || "");
+      if (componente === "Prancha") setValue("servicoPrancha", selectedFleet.servicoPreOs || "");
+      else setValue("servicoCavalo", selectedFleet.servicoPreOs || "");
     }
-  }, [usarPreOs, selectedFleet, setValue]);
+  }, [usarPreOs, selectedFleet, componente, setValue]);
 
   const interrupted = fretes.find(
     (item) =>
@@ -293,7 +294,7 @@ export function MaintenanceTrackingModal({
                     </>
                   ) : (
                     <label className="sm:col-span-2">
-                      <span className="label">Número da OS</span>
+                      <span className="label">{componente === "Cavalo" ? "OS Cavalo" : componente === "Prancha" ? "OS Prancha" : "Número da OS"}</span>
                       <input className="field" {...register("numeroOs")} />
                       {errors.numeroOs && (
                         <small className="mt-1 block text-red-600">
@@ -390,15 +391,16 @@ export function MaintenanceTrackingModal({
                     </div>
                   )}
 
-                  <label className="sm:col-span-2">
-                    <span className="label">Serviço a ser realizado</span>
-                    <textarea
-                      className="field min-h-[72px] resize-none overflow-hidden"
-                      rows={2}
-                      onInput={(event) => growTextarea(event.currentTarget)}
-                      {...register("servico")}
-                    />
-                  </label>
+                  {(componente === "Cavalo" || componente === "Ambos") && <label className={componente === "Cavalo" ? "sm:col-span-2" : ""}>
+                    <span className="label">Serviço Cavalo</span>
+                    <textarea className="field min-h-[72px] resize-none overflow-hidden" rows={2} onInput={(event) => growTextarea(event.currentTarget)} {...register("servicoCavalo")} />
+                    {errors.servicoCavalo && <small className="mt-1 block text-red-600">{errors.servicoCavalo.message}</small>}
+                  </label>}
+                  {(componente === "Prancha" || componente === "Ambos") && <label className={componente === "Prancha" ? "sm:col-span-2" : ""}>
+                    <span className="label">Serviço Prancha</span>
+                    <textarea className="field min-h-[72px] resize-none overflow-hidden" rows={2} onInput={(event) => growTextarea(event.currentTarget)} {...register("servicoPrancha")} />
+                    {errors.servicoPrancha && <small className="mt-1 block text-red-600">{errors.servicoPrancha.message}</small>}
+                  </label>}
 
                   {interrupted && (
                     <fieldset className="rounded-xl border border-[#e3e8e5] p-4 sm:col-span-2">

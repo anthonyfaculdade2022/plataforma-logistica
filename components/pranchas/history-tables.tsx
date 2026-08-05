@@ -393,7 +393,7 @@ export function FreightHistoryTable({
         }}
       >
         {(
-          ["Todos", "Pendente", "Em Frete", "Concluído", "Cancelado"] as const
+          ["Todos", "Concluído", "Cancelado"] as const
         ).map((s) => (
           <button
             key={s}
@@ -416,9 +416,7 @@ export function FreightHistoryTable({
 
 const maintenanceColumn = createColumnHelper<Manutencao>();
 export function MaintenanceHistoryTable({ items }: { items: Manutencao[] }) {
-  const [status, setStatus] = useState<
-      "Todas" | "Em manutenção" | "Finalizadas"
-    >("Todas"),
+  const [status, setStatus] = useState<"Todas" | "Finalizadas">("Todas"),
     [query, setQuery] = useState(""),
     [period, setPeriod] = useState<Period>("Todos"),
     [start, setStart] = useState(""),
@@ -429,11 +427,7 @@ export function MaintenanceHistoryTable({ items }: { items: Manutencao[] }) {
     () =>
       items.filter((m) => {
         const fleet = getFrotaConfig(m.frota),
-          matchesStatus =
-            status === "Todas" ||
-            (status === "Em manutenção"
-              ? m.status === "Em manutenção"
-              : m.status === "Finalizada"),
+          matchesStatus = status === "Todas" || m.status === "Finalizada",
           haystack = [
             m.frota,
             fleet?.prancha,
@@ -545,7 +539,7 @@ export function MaintenanceHistoryTable({ items }: { items: Manutencao[] }) {
           setExpanded,
         }}
       >
-        {(["Todas", "Em manutenção", "Finalizadas"] as const).map((s) => (
+        {(["Todas", "Finalizadas"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setStatus(s)}

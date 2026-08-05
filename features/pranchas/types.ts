@@ -1,5 +1,5 @@
 export type Status = "Pendente" | "Em Frete" | "Concluído" | "Cancelado";
-export type Prioridade = "Baixa" | "Média" | "Alta";
+export type Prioridade = "Urgente" | "Alta" | "Normal" | "Baixa" | "Média";
 export type FrotaStatus = "Disponível" | "Em Frete" | "Manutenção";
 export type EquipeTransporte = {
   frota: string;
@@ -75,6 +75,8 @@ export type Frota = {
   numeroPreOs?: string;
   servicoPreOs?: string;
   semMotorista?: boolean;
+  motorista?: string;
+  observacoes?: string;
 };
 export type Manutencao = {
   id: string;
@@ -86,12 +88,14 @@ export type Manutencao = {
   tipo: "Preventiva" | "Corretiva";
   componente?: "Cavalo" | "Prancha" | "Ambos";
   servico: string;
+  servicoCavalo?: string;
+  servicoPrancha?: string;
   observacoes: string;
   previsao: boolean;
   previsaoData?: string;
   previsaoHora?: string;
   responsavel: string;
-  status: "Em manutenção" | "Finalizada";
+  status: "Em manutenção" | "Finalizada" | "Cancelada";
   numeroOs: string;
   numeroOsCavalo?: string;
   numeroOsPrancha?: string;
